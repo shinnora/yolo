@@ -5,9 +5,12 @@ import chainer
 import glob
 import os
 import renom as rm
-from renom.optimizer import Sgd
+from renom.cuda.cuda import set_cuda_active, cuGetDeviceCount, cuDeviceSynchronize
+from renom import cuda
 from darknet19 import *
 from lib.image_generator import *
+
+set_cuda_active(True)
 
 # hyper parameters
 input_height, input_width = (224, 224)
@@ -22,6 +25,7 @@ lr_decay_power = 4
 momentum = 0.9
 weight_decay = 0.0005
 classes = 10
+num_gpu = cuGetDeviceCount()
 
 # load image generator
 print("loading image generator...")
@@ -39,7 +43,12 @@ if os.path.isfile(backup_file):
 #cuda.get_device(0).use()
 #model.to_gpu() # for gpu
 
-opt = Sgd(lr=learning_rate, momentum=momentum)
+trainer = Trainer(model,
+                  batch_size=32,
+                  loss_func=rm.softmax_cross_entropy,
+                  num_epoch=1,
+                  optimizer=rm.Sgd(lr=learning_rate, momentum=momentum))
+
 
 # start to train
 print("start training")
@@ -50,32 +59,32 @@ for batch in range(max_batches):
         n_items=1,
         crop_width=input_width,
         crop_height=input_height,
-        min_item_scale=0.3,
-        max_item_scale=1.3,
+        min_item_scale=0.1,
+        max_item_scale=0.4,
         rand_angle=25,
         minimum_crop=0.8,
         delta_hue=0.01,
         delta_sat_scale=0.5,
         delta_val_scale=0.5
     )
-    x = rm.Variable(x)
+    #x = rm.Variable(x)
     one_hot_t = []
     for i in range(len(t)):
         one_hot_t.append(t[i][0]["one_hot_label"])
     #x.to_gpu()
     one_hot_t = np.array(one_hot_t, dtype=np.float32)
-    one_hot_t = rm.Variable(one_hot_t)
+    #one_hot_t = rm.Variable(one_hot_t)
     #one_hot_t.to_gpu()
+    trainer.train(train_distributor=NdarrayDistributor(train_x, one_hot_t))
+    # with model.train():
+    #     output = model(x)
+    #     loss = rm.softmax_cross_entropy(output, one_hot_t)
 
-    with model.train():
-        output = model(x)
-        loss = rm.softmax_cross_entropy(output, one_hot_t)
+    #loss.to_cpu()
 
-    loss.to_cpu()
-
-    grad = loss.grad()
-    grad.update(opt)
-    print("[batch %d (%d images)] loss: %f" % (batch+1, (batch+1) * batch_size, loss))
+    # grad = loss.grad()
+    # grad.update(opt)
+    # print("[batch %d (%d images)] loss: %f" % (batch+1, (batch+1) * batch_size, loss))
 
 
     # save model
@@ -85,5 +94,5 @@ for batch in range(max_batches):
         model.save(model_file)
         model.save(backup_file)
 
-print("saving model to %s/darknet19_final.h5" % (backup_path))
-serializers.save_hdf5("%s/darknet19_final.h5" % (backup_path), model)
+# print("saving model to %s/darknet19_final.h5" % (backup_path))
+# serializers.save_hdf5("%s/darknet19_final.h5" % (backup_path), model)
