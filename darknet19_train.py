@@ -19,7 +19,7 @@ input_height, input_width = (224, 224)
 item_path = "./items"
 background_path = "./backgrounds"
 # label_file = "./data/label.txt"
-backup_path = "backup"
+backup_path = "./backup"
 batch_size = 32
 max_batches = 3000
 learning_rate = 0.001
@@ -90,7 +90,7 @@ for batch in range(max_batches):
 
 
     # save model
-    if (batch+1) % 1000 == 0:
+    if (batch+1) % 100 == 0:
         model_file = "%s/%s.h5" % (backup_path, batch+1)
         print("saving model to %s" % (model_file))
         model.save(model_file)
