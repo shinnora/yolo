@@ -22,7 +22,7 @@ background_path = "./backgrounds"
 backup_path = "./backup"
 batch_size = 32
 max_batches = 3000
-learning_rate = 0.032
+learning_rate = 0.001 * batch_size
 lr_decay_power = 4
 momentum = 0.9
 weight_decay = 0.0005
@@ -88,6 +88,7 @@ for batch in range(max_batches):
     # grad.update(opt)
     # print("[batch %d (%d images)] loss: %f" % (batch+1, (batch+1) * batch_size, loss))
 
+    trainer.optimizer = rm.Sgd(lr=learning_rate * (1 - batch / max_batches) ** lr_decay_power, momentum=momentum) # Polynomial decay learning rate
 
     # save model
     if (batch+1) % 1000 == 0:
