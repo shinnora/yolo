@@ -7,6 +7,8 @@ import os
 import renom as rm
 from renom.cuda.cuda import set_cuda_active, cuGetDeviceCount, cuDeviceSynchronize
 from renom import cuda
+from renom.utility.trainer import Trainer
+from renom.utility.distributor import NdarrayDistributor
 from darknet19 import *
 from lib.image_generator import *
 
@@ -47,7 +49,7 @@ trainer = Trainer(model,
                   batch_size=32,
                   loss_func=rm.softmax_cross_entropy,
                   num_epoch=1,
-                  optimizer=rm.Sgd(lr=learning_rate, momentum=momentum))
+                  optimizer=rm.Sgd(lr=learning_rate, momentum=momentum), num_gpu=num_gpu)
 
 
 # start to train
