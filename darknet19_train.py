@@ -20,8 +20,8 @@ item_path = "./items"
 background_path = "./backgrounds"
 # label_file = "./data/label.txt"
 backup_path = "./backup"
-batch_size = 1024
-max_batches = 1000
+batch_size = 32
+max_batches = 3000
 learning_rate = 0.001
 lr_decay_power = 4
 momentum = 0.9
@@ -47,7 +47,7 @@ if os.path.isfile(backup_file):
 
 trainer = Trainer(model,
                   batch_size=32,
-                  loss_func=rm.softmax_cross_entropy,
+                  loss_func=rm.mean_squared_error,
                   num_epoch=1,
                   optimizer=rm.Sgd(lr=learning_rate, momentum=momentum), num_gpu=num_gpu)
 
