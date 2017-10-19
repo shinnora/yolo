@@ -77,7 +77,7 @@ for batch in range(max_batches):
     one_hot_t = np.array(one_hot_t, dtype=np.float32)
     #one_hot_t = rm.Variable(one_hot_t)
     #one_hot_t.to_gpu()
-    trainer.train(train_distributor=NdarrayDistributor(train_x, one_hot_t))
+    trainer.train(train_distributor=NdarrayDistributor(x, one_hot_t))
     # with model.train():
     #     output = model(x)
     #     loss = rm.softmax_cross_entropy(output, one_hot_t)
