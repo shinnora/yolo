@@ -90,7 +90,7 @@ for batch in range(max_batches):
 
 
     # save model
-    if (batch+1) % 100 == 0:
+    if (batch+1) % 1000 == 0:
         model_file = "%s/%s.h5" % (backup_path, batch+1)
         print("saving model to %s" % (model_file))
         model.save(model_file)
