@@ -45,7 +45,6 @@ yolov2 = YOLOv2(classes=classes, bbox=bbox)
 copy_conv_layer(model, yolov2, range(1, partial_layer+1))
 #copy_bias_layer(model.predictor, yolov2, range(1, partial_layer+1))
 #copy_bn_layer(model.predictor, yolov2, range(1, partial_layer+1))
-model = YOLOv2Predictor(yolov2)
 
 print("saving model to %s" % (output_weight_file))
-model.save(output_weight_file)
+yolov2.save(output_weight_file)

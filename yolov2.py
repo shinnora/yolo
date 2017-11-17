@@ -21,6 +21,12 @@ class YOLOv2(rm.Model):
 
     def __init__(self, classes, bbox):
         super(YOLOv2, self).__init__()
+
+        self.bbox = bbox
+        self.classes = classes
+        self.anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
+        self.thresh = 0.6
+
             ##### common layers for both pretrained layers and yolov2 #####
         self.conv1  = rm.Conv2d(channel=32, filter=3, stride=1, padding=1)
         self.bn1 = rm.BatchNormalize()
@@ -76,8 +82,6 @@ class YOLOv2(rm.Model):
         self.bn21 = rm.BatchNormalize()
         self.conv22  = rm.Conv2d(channel=bbox * (5 + classes), filter=1, stride=1, padding=0)
 
-        self.bbox = bbox
-        self.classes = classes
 
 
 
@@ -112,51 +116,56 @@ class YOLOv2(rm.Model):
 
         return h
 
-
-
-class YOLOv2Predictor(rm.Model):
-
-    def __init__(self, predictor):
-        super(YOLOv2Predictor, self).__init__(predictor=predictor)
-        self.anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
-        self.thresh = 0.6
-        # self.seen = 0
-        # self.unstable_seen = 5000
-
     def init_anchors(self, anchors):
         self.anchors = anchors
 
-    def yolo_train(self, input_x, t, opt):
-        with self.predictor.train():
-            output = self.predictor(input_x)
-            loss = yolo_detector(output, t, bbox=self.predictor.bbox, classes=self.predictor.classes, anchors=self.anchors)
-        loss.to_cpu()
 
-        grad = loss.grad()
-        grad.update(opt)
-        return loss
 
-    def yolo_predict(self, input_x):
-        output = self.predictor(input_x)
-        batch_size, _, grid_h, grid_w = output.shape
-        output_reshape = np.reshape(output, (batch_size, bbox, classes+5, grid_h, grid_w))
-        x, y, w, h, conf, prob = output_reshape[:,:,0:1,:,:], output_reshape[:,:,1:2,:,:],output_reshape[:,:,2:3,:,:], output_reshape[:,:,3:4,:,:], output_reshape[:,:,4:5,:,:], output_reshape[:,:,5:,:,:]
-        x = rm.sigmoid(x) # xのactivation
-        y = rm.sigmoid(y) # yのactivation
-        conf = rm.sigmoid(conf) # confのactivation
-        prob = np.transpose(prob, (0, 2, 1, 3, 4))
-        prob = rm.softmax(prob) # probablitiyのacitivation
-        prob = np.transpose(prob, (0, 2, 1, 3, 4))
 
-        # x, y, w, hを絶対座標へ変換
-        x_shift = np.broadcast_to(np.arange(grid_w, dtype=np.float32), x.shape)
-        y_shift = np.broadcast_to(np.arange(grid_h, dtype=np.float32).reshape(grid_h, 1), y.shape)
-        w_anchor = np.broadcast_to(np.reshape(np.array(self.anchors, dtype=np.float32)[:, 0], (bbox, 1, 1, 1)), w.shape)
-        h_anchor = np.broadcast_to(np.reshape(np.array(self.anchors, dtype=np.float32)[:, 1], (bbox, 1, 1, 1)), h.shape)
-        #x_shift.to_gpu(), y_shift.to_gpu(), w_anchor.to_gpu(), h_anchor.to_gpu()
-        box_x = (x + x_shift) / grid_w
-        box_y = (y + y_shift) / grid_h
-        box_w = np.exp(w) * w_anchor / grid_w
-        box_h = np.exp(h) * h_anchor / grid_h
+#
+# class YOLOv2Predictor(rm.Model):
+#
+#     def __init__(self, predictor):
+#         super(YOLOv2Predictor, self).__init__(predictor=predictor)
+#         self.anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
+#         self.thresh = 0.6
+#         # self.seen = 0
+#         # self.unstable_seen = 5000
+#
+#     def init_anchors(self, anchors):
+#         self.anchors = anchors
 
-        return box_x, box_y, box_w, box_h, conf, prob
+def yolo_train(model, input_x, t, opt):
+    with model.train():
+        output = model(input_x)
+        loss = yolo_detector(output, t, bbox=model.bbox, classes=model.classes, anchors=model.anchors)
+    loss.to_cpu()
+
+    grad = loss.grad()
+    grad.update(opt)
+    return loss
+
+def yolo_predict(model, input_x):
+    output = model(input_x)
+    batch_size, _, grid_h, grid_w = output.shape
+    output_reshape = np.reshape(output, (batch_size, model.bbox, model.classes+5, grid_h, grid_w))
+    x, y, w, h, conf, prob = output_reshape[:,:,0:1,:,:], output_reshape[:,:,1:2,:,:],output_reshape[:,:,2:3,:,:], output_reshape[:,:,3:4,:,:], output_reshape[:,:,4:5,:,:], output_reshape[:,:,5:,:,:]
+    x = rm.sigmoid(x) # xのactivation
+    y = rm.sigmoid(y) # yのactivation
+    conf = rm.sigmoid(conf) # confのactivation
+    prob = np.transpose(prob, (0, 2, 1, 3, 4))
+    prob = rm.softmax(prob) # probablitiyのacitivation
+    prob = np.transpose(prob, (0, 2, 1, 3, 4))
+
+    # x, y, w, hを絶対座標へ変換
+    x_shift = np.broadcast_to(np.arange(grid_w, dtype=np.float32), x.shape)
+    y_shift = np.broadcast_to(np.arange(grid_h, dtype=np.float32).reshape(grid_h, 1), y.shape)
+    w_anchor = np.broadcast_to(np.reshape(np.array(model.anchors, dtype=np.float32)[:, 0], (model.bbox, 1, 1, 1)), w.shape)
+    h_anchor = np.broadcast_to(np.reshape(np.array(model.anchors, dtype=np.float32)[:, 1], (model.bbox, 1, 1, 1)), h.shape)
+    #x_shift.to_gpu(), y_shift.to_gpu(), w_anchor.to_gpu(), h_anchor.to_gpu()
+    box_x = (x + x_shift) / grid_w
+    box_y = (y + y_shift) / grid_h
+    box_w = np.exp(w) * w_anchor / grid_w
+    box_h = np.exp(h) * h_anchor / grid_h
+
+    return box_x, box_y, box_w, box_h, conf, prob

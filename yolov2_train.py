@@ -38,8 +38,7 @@ generator = ImageGenerator(item_path, background_path)
 
 # load model
 print("loading initial model...")
-yolov2 = YOLOv2(n_classes=n_classes, n_boxes=n_boxes)
-model = YOLOv2Predictor(yolov2)
+model = YOLOv2(n_classes=n_classes, n_boxes=n_boxes)
 model.load(initial_weight_file)
 
 #model.to_gpu()
@@ -72,7 +71,7 @@ for batch in range(max_batches):
     #x.to_gpu()
 
     # forward
-    loss = model.yolo_train(x, t, opt)
+    loss = yolo_train(model, x, t, opt)
     print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, optimizer.lr, loss.data))
     print("/////////////////////////////////////")
 
