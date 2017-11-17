@@ -65,7 +65,7 @@ class YOLOv2(rm.Model):
         self.bn18 = rm.BatchNormalize()
 
         ###### pretraining layer
-        self.conv23 = rm.Conv2d(channel=self.classes, filter=1, stride=1, padding=0)
+        self.conv23 = rm.Conv2d(channel=classes, filter=1, stride=1, padding=0)
 
         ###### detection layer
         self.conv19  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
@@ -129,7 +129,7 @@ class YOLOv2Predictor(rm.Model):
     def yolo_train(self, input_x, t, opt):
         with self.predictor.train():
             output = self.predictor(input_x)
-            loss = yolo_detector(output, t, bbox=self.bbox, classes=self.classes, anchors=self.anchors)
+            loss = yolo_detector(output, t, bbox=self.predictor.bbox, classes=self.predictor.classes, anchors=self.anchors)
         loss.to_cpu()
 
         grad = loss.grad()

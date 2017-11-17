@@ -1,13 +1,11 @@
 import time
 import cv2
 import numpy as np
-from chainer import serializers, Variable
-import chainer.functions as F
 import argparse
 from darknet19 import *
 from yolov2 import *
-from yolov2_grid_prob import *
-from yolov2_bbox import *
+
+
 
 classes = 10
 bbox = 5
@@ -37,7 +35,7 @@ def copy_conv_layer(src, dst, layers):
 
 # load model
 print("loading original model...")
-input_weight_file = "./backup/darknet19_448_final.h5"
+input_weight_file = "./backup/backup.h5"
 output_weight_file = "./backup/partial.h5"
 
 model = Darknet19(classes=classes)
