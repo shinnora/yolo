@@ -52,7 +52,7 @@ num_gpu = cuGetDeviceCount()
 
 opt = Sgd(lr=learning_rate, momentum=momentum)
 
-trainer = Trainer(model, batch_size=16, loss_func=yolo_detector, num_epoch=1, optimizer=opt, num_gpu=num_gpu)
+trainer = Trainer(model, batch_size=32, loss_func=yolo_detector, num_epoch=1, optimizer=opt, num_gpu=num_gpu)
 
 # start to train
 print("start training")
@@ -64,13 +64,13 @@ for batch in range(max_batches):
 
     # generate sample
     x, t = generator.generate_samples(
-        n_samples=16,
+        n_samples=32,
         n_items=3,
         crop_width=input_width,
         crop_height=input_height,
-        min_item_scale=0.5,
-        max_item_scale=2.5,
-        rand_angle=15,
+        min_item_scale=0.1,
+        max_item_scale=0.4,
+        rand_angle=25,
         minimum_crop=0.8,
         delta_hue=0.01,
         delta_sat_scale=0.5,
@@ -79,7 +79,6 @@ for batch in range(max_batches):
     #x = Variable(x)
     #x.to_gpu()
     print(t)
-
     # forward
     trainer.train(train_distributor=NdarrayDistributor(x, t))
     print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, opt._lr, loss.data))
