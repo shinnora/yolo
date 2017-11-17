@@ -78,6 +78,7 @@ for batch in range(max_batches):
     )
     #x = Variable(x)
     #x.to_gpu()
+    print(t)
 
     # forward
     trainer.train(train_distributor=NdarrayDistributor(x, t))
