@@ -80,8 +80,8 @@ for batch in range(max_batches):
     #x.to_gpu()
 
     # forward
-    loss = trainer.train(train_distributor=NdarrayDistributor(x, t))
-    print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, optimizer.lr, loss.data))
+    trainer.train(train_distributor=NdarrayDistributor(x, t))
+    print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, opt._lr, loss.data))
     print("/////////////////////////////////////")
 
     # save model
