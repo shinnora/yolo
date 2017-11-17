@@ -57,7 +57,7 @@ trainer = Trainer(model, batch_size=16, loss_func=yolo_detector, num_epoch=1, op
 print("start training")
 for batch in range(max_batches):
     if str(batch) in learning_schedules:
-        optimizer.lr = learning_schedules[str(batch)]
+        opt._lr = learning_schedules[str(batch)]
     if batch % 80 == 0:
         input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
 
