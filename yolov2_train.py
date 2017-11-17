@@ -8,6 +8,7 @@ from renom.optimizer import Sgd
 from renom.utility.trainer import Trainer
 from renom.cuda.cuda import set_cuda_active, cuGetDeviceCount, cuDeviceSynchronize
 from renom import cuda
+from renom.utility.distributor import NdarrayDistributor
 from yolov2 import *
 from lib.utils import *
 from lib.image_generator import *
@@ -75,11 +76,11 @@ for batch in range(max_batches):
         delta_sat_scale=0.5,
         delta_val_scale=0.5
     )
-    x = Variable(x)
+    #x = Variable(x)
     #x.to_gpu()
 
     # forward
-    loss = yolo_train(model, x, t, opt)
+    loss = trainer.train(train_distributor=NdarrayDistributor(x, t))
     print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, optimizer.lr, loss.data))
     print("/////////////////////////////////////")
 
