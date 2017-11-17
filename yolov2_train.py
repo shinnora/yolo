@@ -5,9 +5,13 @@ import glob
 import os
 import renom as rm
 from renom.optimizer import Sgd
+from renom.cuda.cuda import set_cuda_active, cuGetDeviceCount, cuDeviceSynchronize
+from renom import cuda
 from yolov2 import *
 from lib.utils import *
 from lib.image_generator import *
+
+set_cuda_active(True)
 
 # hyper parameters
 train_sizes = [320, 352, 384, 416, 448]
@@ -29,8 +33,8 @@ learning_schedules = {
 lr_decay_power = 4
 momentum = 0.9
 weight_decay = 0.005
-n_classes = 10
-n_boxes = 5
+classes = 10
+bbox = 5
 
 # load image generator
 print("loading image generator...")
@@ -38,12 +42,15 @@ generator = ImageGenerator(item_path, background_path)
 
 # load model
 print("loading initial model...")
-model = YOLOv2(n_classes=n_classes, n_boxes=n_boxes)
+model = YOLOv2(classes=classes, bbox=bbox)
 model.load(initial_weight_file)
+num_gpu = cuGetDeviceCount()
 
 #model.to_gpu()
 
 opt = Sgd(lr=learning_rate, momentum=momentum)
+
+trainer = Trainer(model, batch_size=16, loss_func=yolo_detector, num_epoch=1, optimizer=opt, num_gpu=num_gpu)
 
 # start to train
 print("start training")
