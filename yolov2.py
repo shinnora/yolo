@@ -138,7 +138,7 @@ class YOLOv2(rm.Model):
 def yolo_train(model, input_x, t, opt):
     with model.train():
         output = model(input_x)
-        loss = yolo_detector(output, t, bbox=model.bbox, classes=model.classes, anchors=model.anchors)
+        loss = yolo_detector(output, t, bbox=model.bbox, classes=model.classes, init_anchors=model.anchors)
     loss.to_cpu()
 
     grad = loss.grad()

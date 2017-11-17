@@ -10,8 +10,8 @@ from renom.cuda import cuda as cu
 
 class yolo_detector(Node):
 
-    def __new__(cls, output, t, bbox, classes, anchors):
-        assert rhs.ndim == 4, "Input arrays must have 4 dimenstions."
+    def __new__(cls, output, t, bbox, classes, init_anchors):
+       # assert rhs.ndim == 4, "Input arrays must have 4 dimenstions."
         return cls.calc_value(output, t, bbox, classes, init_anchors)
 
 
@@ -138,7 +138,7 @@ class yolo_detector(Node):
 
     @classmethod
     def _oper_gpu(cls, output, t, bbox, classes, init_anchors):
-        return cls._oper_cpu(output, t, cells, bbox, classes)
+        return cls._oper_cpu(output, t, bbox, classes, init_anchors)
 
     def _backward_cpu(self, context, dy, **kwargs):
         if isinstance(self.attrs._output, Node):
