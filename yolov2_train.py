@@ -5,6 +5,7 @@ import glob
 import os
 import renom as rm
 from renom.optimizer import Sgd
+from renom.utility.trainer import Trainer
 from renom.cuda.cuda import set_cuda_active, cuGetDeviceCount, cuDeviceSynchronize
 from renom import cuda
 from yolov2 import *
