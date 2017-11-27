@@ -24,9 +24,10 @@ class yolo_detector(Node):
         y = rm.sigmoid(y)
         conf = rm.sigmoid(conf)
         prob = np.transpose(prob, (0, 2, 1, 3, 4))
-        prob = rm.softmax(prob)
-
-        deltas = np.zeros_like(output_reshape)
+#        prob = rm.softmax(prob)
+        prob_exp = np.exp(prob)
+        prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
+        deltas = np.zeros(output_reshape.shape)
 
         #anchor
         if init_anchors is None:
@@ -37,16 +38,16 @@ class yolo_detector(Node):
         thresh = 0.6
 
         # 教師データ
-        tw = np.zeros_like(w)
-        th = np.zeros_like(h)
+        tw = np.zeros(w.shape)
+        th = np.zeros(h.shape)
         tx = np.tile(0.5, x.shape).astype(np.float32)
         ty = np.tile(0.5, y.shape).astype(np.float32)
         box_learning_scale = np.tile(0.1, x.shape).astype(np.float32)
 
-        tconf = np.zeros(conf.shape, dtype=float32)
+        tconf = np.zeros(conf.shape, dtype=np.float32)
         conf_learning_scale = np.tile(0.1, conf.shape).astype(np.float32)
 
-        tprob = prob.data.copy()
+        tprob = prob.copy()
 
         x_shift = np.broadcast_to(np.arange(grid_w, dtype=np.float32), x.shape[1:])
         y_shift = np.broadcast_to(np.arange(grid_h, dtype=np.float32).reshape(grid_h, 1), y.shape[1:])
@@ -95,7 +96,7 @@ class yolo_detector(Node):
                 ty[batch, truth_n, :, truth_h, truth_w] = float(truth_box["y"]) * grid_h - truth_h
                 tw[batch, truth_n, :, truth_h, truth_w] = np.log(float(truth_box["w"]) / abs_anchors[truth_n][0])
                 th[batch, truth_n, :, truth_h, truth_w] = np.log(float(truth_box["h"]) / abs_anchors[truth_n][1])
-                tprob[batch, :, truth_h, truth_w] = 0
+                tprob[batch, :, truth_n, truth_h, truth_w] = 0
                 tprob[batch, int(truth_box["label"]), truth_n, truth_h, truth_w] = 1
 
                 full_truth_box = Box(float(truth_box["x"]), float(truth_box["y"]), float(truth_box["w"]), float(truth_box["h"]))
@@ -121,9 +122,9 @@ class yolo_detector(Node):
         c_loss = np.sum((tconf - conf) ** 2 * conf_learning_scale) / 2
         deltas[:,:,4:5,:,:] = (conf - tconf) * conf_learning_scale * (1 - conf) * conf
         p_loss = np.sum((tprob - prob) ** 2) / 2
-        deltas[:,:,5:,:,:] = ((prob - tprob) * (1 - prob) * prob).reshape(0, 2, 1, 3, 4)
+        deltas[:,:,5:,:,:] = ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4)
         print("x_loss: %f  y_loss: %f  w_loss: %f  h_loss: %f  c_loss: %f   p_loss: %f" %
-            (x_loss.data, y_loss.data, w_loss.data, h_loss.data, c_loss.data, p_loss.data)
+            (x_loss, y_loss, w_loss, h_loss, c_loss, p_loss)
         )
 
         loss = x_loss + y_loss + w_loss + h_loss + c_loss + p_loss
@@ -142,11 +143,11 @@ class yolo_detector(Node):
 
     def _backward_cpu(self, context, dy, **kwargs):
         if isinstance(self.attrs._output, Node):
-            self.attrs._x._update_diff(context, self.attrs._deltas * dy)
+            self.attrs._output._update_diff(context, self.attrs._deltas * dy)
 
     def _backward_gpu(self, context, dy, **kwargs):
         if isinstance(self.attrs._output, Node):
-            self.attrs._x._update_diff(context, get_gpu(self.attrs._deltas) * dy)
+            self.attrs._output._update_diff(context, get_gpu(self.attrs._deltas) * dy)
 
 
 class YoloDetector(object):

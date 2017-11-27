@@ -84,7 +84,7 @@ def box_intersection(a, b):
 def multi_box_intersection(a, b):
     w = multi_overlap(a.x, a.w, b.x, b.w)
     h = multi_overlap(a.y, a.h, b.y, b.h)
-    zeros = np.zeros(w.shape, dtype=w.data.dtype)
+    zeros = np.zeros(w.shape, dtype=w.dtype)
 
     w = np.maximum(w, zeros)
     h = np.maximum(h, zeros)
