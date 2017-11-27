@@ -74,8 +74,9 @@ class yolo_detector(Node):
             ious = np.array(ious)
             best_ious.append(np.max(ious, axis=0))
         best_ious = np.array(best_ious)
+        print(best_ious)
 
-        tconf[np.where(best_ious > thresh)] = conf[np.where(best_ious > thresh)]
+        tconf[best_ious > thresh] = conf[best_ious > thresh]
         conf_learning_scale[best_ious > thresh] = 0
 
         abs_anchors = anchors / np.array([grid_w, grid_h])
