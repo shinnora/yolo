@@ -13,6 +13,8 @@ from yolov2 import *
 from lib.utils import *
 from lib.image_generator import *
 
+np.seterr(all="raise")
+
 set_cuda_active(True)
 
 # hyper parameters
