@@ -131,7 +131,7 @@ class yolo_detector(Node):
 
         ret = cls._create_node(loss)
         ret.attrs._output = output
-        ret.attrs._deltas = deltas
+        ret.attrs._deltas = deltas.reshape(batch_size, bbox * (classes + 5), grid_h, grid_w)
         # ret.attrs._cells = cells
         # ret.attrs._bbox = bbox
         # ret.attrs._classes = classes
