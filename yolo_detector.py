@@ -23,12 +23,12 @@ class yolo_detector(Node):
         x = rm.sigmoid(x)
         y = rm.sigmoid(y)
         conf = rm.sigmoid(conf)
-        prob = np.transpose(prob, (0, 2, 1, 3, 4))
-#        prob = rm.softmax(prob)
-        prob_exp = np.exp(prob)
-        prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
+        prob = np.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
+        prob = rm.softmax(prob)
+        # prob_exp = np.exp(prob)
+        # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
+        prob = rm.reshape(prob, (batch_size, classes, bbox, grid_h, grid_w))
         deltas = np.zeros(output_reshape.shape)
-
         #anchor
         if init_anchors is None:
             anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
