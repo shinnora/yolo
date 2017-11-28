@@ -66,7 +66,7 @@ for batch in range(max_batches):
 
     # generate sample
     x, t = generator.generate_samples(
-        n_samples=8,
+        n_samples=16,
         n_items=3,
         crop_width=input_width,
         crop_height=input_height,

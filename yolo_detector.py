@@ -47,7 +47,7 @@ class yolo_detector(Node):
         tconf = np.zeros(conf.shape, dtype=np.float32)
         conf_learning_scale = np.tile(0.1, conf.shape).astype(np.float32)
 
-        tprob = prob.copy()
+        tprob = np.copy(prob)
 
         x_shift = np.broadcast_to(np.arange(grid_w, dtype=np.float32), x.shape[1:])
         y_shift = np.broadcast_to(np.arange(grid_h, dtype=np.float32).reshape(grid_h, 1), y.shape[1:])
@@ -75,7 +75,6 @@ class yolo_detector(Node):
             best_ious.append(np.max(ious, axis=0))
         best_ious = np.array(best_ious)
         print(best_ious)
-
         tconf[best_ious > thresh] = conf[best_ious > thresh]
         conf_learning_scale[best_ious > thresh] = 0
 
