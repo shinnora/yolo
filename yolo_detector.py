@@ -36,7 +36,7 @@ class yolo_detector(Node):
             anchors = init_anchors
 
         thresh = 0.6
-
+        print(w)
         # 教師データ
         tw = np.zeros(w.shape)
         th = np.zeros(h.shape)
@@ -47,8 +47,9 @@ class yolo_detector(Node):
         tconf = np.zeros(conf.shape, dtype=np.float32)
         conf_learning_scale = np.tile(0.1, conf.shape).astype(np.float32)
 
-        tprob = np.copy(prob)
-
+        tprob = prob.as_ndarray()
+        print("output")
+        print(output_reshape[1,1, :,1,1])
         x_shift = np.broadcast_to(np.arange(grid_w, dtype=np.float32), x.shape[1:])
         y_shift = np.broadcast_to(np.arange(grid_h, dtype=np.float32).reshape(grid_h, 1), y.shape[1:])
         w_anchor = np.broadcast_to(np.reshape(np.array(anchors, dtype=np.float32)[:, 0], (bbox, 1, 1, 1)), w.shape[1:])
@@ -62,7 +63,6 @@ class yolo_detector(Node):
             box_y = (y[batch] + y_shift) / grid_h
             box_w = np.exp(w[batch]) * w_anchor / grid_w
             box_h = np.exp(h[batch]) * h_anchor / grid_h
-
             ious = []
             for truth_index in range(truth_bbox):
                 truth_box_x = np.broadcast_to(np.array(t[batch][truth_index]["x"], dtype=np.float32), box_x.shape)
@@ -74,7 +74,6 @@ class yolo_detector(Node):
             ious = np.array(ious)
             best_ious.append(np.max(ious, axis=0))
         best_ious = np.array(best_ious)
-        print(best_ious)
         tconf[best_ious > thresh] = conf[best_ious > thresh]
         conf_learning_scale[best_ious > thresh] = 0
 
@@ -110,6 +109,7 @@ class yolo_detector(Node):
                 tconf[batch, truth_n, :, truth_h, truth_w] = predicted_iou
                 conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 10.0
 
+#        box_learning_scale *= 0.01
         #loss
         x_loss = np.sum((tx - x) ** 2 * box_learning_scale) / 2
         deltas[:,:,0:1,:,:] = (x - tx) * box_learning_scale * (1 - x) * x

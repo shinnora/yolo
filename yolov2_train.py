@@ -26,12 +26,12 @@ backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
 max_batches = 30000
-learning_rate = 1e-5
+learning_rate = 1e-6
 learning_schedules = {
-    "0"    : 1e-5,
-    "500"  : 1e-4,
-    "10000": 1e-5,
-    "20000": 1e-6
+    "0"    : 1e-6,
+    "500"  : 1e-5,
+    "10000": 1e-6,
+    "20000": 1e-7
 }
 
 lr_decay_power = 4
@@ -66,7 +66,7 @@ for batch in range(max_batches):
 
     # generate sample
     x, t = generator.generate_samples(
-        n_samples=16,
+        n_samples=8,
         n_items=3,
         crop_width=input_width,
         crop_height=input_height,
