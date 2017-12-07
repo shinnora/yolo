@@ -35,7 +35,7 @@ def copy_conv_layer(src, dst, layers):
 
 # load model
 print("loading original model...")
-input_weight_file = "./backup/backup.h5"
+input_weight_file = "./backup/darknet19_448_final.h5"
 output_weight_file = "./backup/partial.h5"
 
 model = Darknet19(classes=classes)
