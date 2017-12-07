@@ -26,7 +26,7 @@ backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
 max_batches = 30000
-learning_rate = 1e-6
+learning_rate = 1e-8
 learning_schedules = {
     "0"    : 1e-6,
     "500"  : 1e-5,

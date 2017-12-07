@@ -142,7 +142,6 @@ def yolo_train(model, input_x, t, opt):
     loss.to_cpu()
 
     grad = loss.grad()
-    print(grad)
     grad.update(opt)
     return loss
 
