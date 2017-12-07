@@ -115,9 +115,9 @@ class yolo_detector(Node):
         y_loss = np.sum((ty - y) ** 2 * box_learning_scale) / 2
         deltas[:,:,1:2,:,:] = (y - ty) * box_learning_scale * (1 - y) * y
         w_loss = np.sum((tw - np.exp(w)) ** 2 * box_learning_scale) / 2
-        deltas[:,:,2:3,:,:] = (np.exp(w) - tw) * box_learning_scale * np.exp(w)
+        deltas[:,:,2:3,:,:] = (np.exp(w) - tw) * box_learning_scale * np.exp(w) * 100
         h_loss = np.sum((th - np.exp(h)) ** 2 * box_learning_scale) / 2
-        deltas[:,:,3:4,:,:] = (np.exp(h) - th) * box_learning_scale * np.exp(h)
+        deltas[:,:,3:4,:,:] = (np.exp(h) - th) * box_learning_scale * np.exp(h) * 100
         c_loss = np.sum((tconf - conf) ** 2 * conf_learning_scale) / 2
         deltas[:,:,4:5,:,:] = (conf - tconf) * conf_learning_scale * (1 - conf) * conf
         p_loss = np.sum((tprob - prob) ** 2) / 2
