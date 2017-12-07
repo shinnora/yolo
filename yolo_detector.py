@@ -36,7 +36,6 @@ class yolo_detector(Node):
             anchors = init_anchors
 
         thresh = 0.6
-        print(w)
         # 教師データ
         tw = np.zeros(w.shape)
         th = np.zeros(h.shape)
