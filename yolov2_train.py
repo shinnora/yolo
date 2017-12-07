@@ -26,7 +26,7 @@ backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
 max_batches = 30000
-learning_rate = 1e-8
+learning_rate = 1e-6
 learning_schedules = {
     "0"    : 1e-6,
     "500"  : 1e-5,
@@ -82,10 +82,11 @@ for batch in range(max_batches):
     #x.to_gpu()
     # forward
     loss = yolo_train(model, x, t, opt)
+    #print(model.conv22.params)
     #trainer.train(train_distributor=NdarrayDistributor(x, t))
     print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, opt._lr, loss))
     print("/////////////////////////////////////")
-
+    
     # save model
     if (batch+1) % 500 == 0:
         model_file = "%s/%s.h5" % (backup_path, batch+1)
