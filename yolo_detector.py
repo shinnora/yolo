@@ -126,7 +126,7 @@ class yolo_detector(Node):
             (x_loss, y_loss, w_loss, h_loss, c_loss, p_loss)
         )
 
-        print(deltas[1,1,:,1,1])
+        #print(deltas[1,1,:,1,1])
 
         loss = x_loss + y_loss + w_loss + h_loss + c_loss + p_loss
 
