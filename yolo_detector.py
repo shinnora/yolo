@@ -28,17 +28,22 @@ class yolo_detector(Node):
         # prob_exp = np.exp(prob)
         # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
         prob = rm.reshape(prob, (batch_size, classes, bbox, grid_h, grid_w))
-        deltas = np.zeros(output_reshape.shape).to_gpu()
+        deltas = np.zeros(output_reshape.shape, dtype=np.float32)
+
+        #x.to_cpu()
+        #y.to_cpu()
+        #conf.to_cpu()
+        #prob.to_cpu()
         #anchor
         if init_anchors is None:
             anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
         else:
             anchors = init_anchors
 
-        thresh = 0.4
+        thresh = 0.5
         # 教師データ
-        tw = np.ones(w.shape)
-        th = np.ones(h.shape)
+        tw = np.ones(w.shape, dtype=np.float32)
+        th = np.ones(h.shape, dtype=np.float32)
         tx = np.tile(0.5, x.shape).astype(np.float32)
         ty = np.tile(0.5, y.shape).astype(np.float32)
         box_learning_scale = np.tile(0.1, x.shape).astype(np.float32)
@@ -106,28 +111,32 @@ class yolo_detector(Node):
                 )
                 predicted_iou = box_iou(full_truth_box, predicted_box)
                 tconf[batch, truth_n, :, truth_h, truth_w] = predicted_iou
-                conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 10.0
+               # conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 10.0
 
 #        box_learning_scale *= 0.01
         #loss
         #print(box_learning_scale)
         x_loss = np.sum((tx - x) ** 2 * box_learning_scale) / 2
         #print(deltas[:,:,0:1,:,:])
-        deltas[:,:,0:1,:,:] = (x - tx) * box_learning_scale * (1 - x) * x
-        #print(((x - tx) *box_learning_scale * (1 - x) * x))
+        deltas[:,:,0:1,:,:] = ((x - tx) * box_learning_scale * (1 - x) * x).as_ndarray()
+        #print(deltas.dtype())
+        #print((x - tx).dtype())
+        #print(deltas[:,:,0:1,:,:] - ((x - tx) *box_learning_scale * (1 - x) * x))
         #print(x-tx)
         #print(deltas[:,:,0,:,:])
         y_loss = np.sum((ty - y) ** 2 * box_learning_scale) / 2
-        deltas[:,:,1:2,:,:] = (y - ty) * box_learning_scale * (1 - y) * y
-        print((y - ty) * box_learning_scale * (1 - y) * y)
+        deltas[:,:,1:2,:,:] = ((y - ty) * box_learning_scale * (1 - y) * y).as_ndarray()
         w_loss = np.sum((tw - np.exp(w)) ** 2 * box_learning_scale) / 2
-        deltas[:,:,2:3,:,:] = (np.exp(w) - tw) * box_learning_scale * np.exp(w)
+        deltas[:,:,2:3,:,:] = ((np.exp(w) - tw) * box_learning_scale * np.exp(w))
         h_loss = np.sum((th - np.exp(h)) ** 2 * box_learning_scale) / 2
-        deltas[:,:,3:4,:,:] = (np.exp(h) - th) * box_learning_scale * np.exp(h)
+        deltas[:,:,3:4,:,:] = ((np.exp(h) - th) * box_learning_scale * np.exp(h))
         c_loss = np.sum((tconf - conf) ** 2 * conf_learning_scale) / 2
-        deltas[:,:,4:5,:,:] = (conf - tconf) * conf_learning_scale * (1 - conf) * conf
+        deltas[:,:,4:5,:,:] = ((conf - tconf) * conf_learning_scale * (1 - conf) * conf).as_ndarray()
+        #print(deltas[:,:,4:5,:,:])
+        #print(deltas[:,:,4:5,:,:] - (conf - tconf) * conf_learning_scale * (1 - conf) * conf)
         p_loss = np.sum((tprob - prob) ** 2) / 2
-        deltas[:,:,5:,:,:] = ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4)
+        deltas[:,:,5:,:,:] = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4)
+        #print(deltas[:,:,5:,:,:] - ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4))
         print("x_loss: %f  y_loss: %f  w_loss: %f  h_loss: %f  c_loss: %f   p_loss: %f" %
             (x_loss, y_loss, w_loss, h_loss, c_loss, p_loss)
         )
