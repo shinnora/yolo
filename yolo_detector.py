@@ -28,7 +28,7 @@ class yolo_detector(Node):
         # prob_exp = np.exp(prob)
         # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
         prob = rm.reshape(prob, (batch_size, classes, bbox, grid_h, grid_w))
-        deltas = np.zeros(output_reshape.shape)
+        deltas = np.zeros(output_reshape.shape).to_gpu()
         #anchor
         if init_anchors is None:
             anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
@@ -111,21 +111,21 @@ class yolo_detector(Node):
 #        box_learning_scale *= 0.01
         #loss
         #print(box_learning_scale)
-        x_loss = np.sum((tx - x) ** 2 * box_learning_scale) / 2 
+        x_loss = np.sum((tx - x) ** 2 * box_learning_scale) / 2
         #print(deltas[:,:,0:1,:,:])
-        deltas[:,:,0:1,:,:] = (x - tx) * box_learning_scale * (1 - x) * x 
+        deltas[:,:,0:1,:,:] = (x - tx) * box_learning_scale * (1 - x) * x
         #print(((x - tx) *box_learning_scale * (1 - x) * x))
         #print(x-tx)
         #print(deltas[:,:,0,:,:])
-        y_loss = np.sum((ty - y) ** 2 * box_learning_scale) / 2 
-        deltas[:,:,1:2,:,:] = (y - ty) * box_learning_scale * (1 - y) * y 
+        y_loss = np.sum((ty - y) ** 2 * box_learning_scale) / 2
+        deltas[:,:,1:2,:,:] = (y - ty) * box_learning_scale * (1 - y) * y
         print((y - ty) * box_learning_scale * (1 - y) * y)
         w_loss = np.sum((tw - np.exp(w)) ** 2 * box_learning_scale) / 2
         deltas[:,:,2:3,:,:] = (np.exp(w) - tw) * box_learning_scale * np.exp(w)
         h_loss = np.sum((th - np.exp(h)) ** 2 * box_learning_scale) / 2
         deltas[:,:,3:4,:,:] = (np.exp(h) - th) * box_learning_scale * np.exp(h)
-        c_loss = np.sum((tconf - conf) ** 2 * conf_learning_scale) / 2 
-        deltas[:,:,4:5,:,:] = (conf - tconf) * conf_learning_scale * (1 - conf) * conf 
+        c_loss = np.sum((tconf - conf) ** 2 * conf_learning_scale) / 2
+        deltas[:,:,4:5,:,:] = (conf - tconf) * conf_learning_scale * (1 - conf) * conf
         p_loss = np.sum((tprob - prob) ** 2) / 2
         deltas[:,:,5:,:,:] = ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4)
         print("x_loss: %f  y_loss: %f  w_loss: %f  h_loss: %f  c_loss: %f   p_loss: %f" %
@@ -136,7 +136,7 @@ class yolo_detector(Node):
 
         ret = cls._create_node(loss)
         ret.attrs._output = output
-        ret.attrs._deltas = deltas.reshape(batch_size, bbox * (classes + 5), grid_h, grid_w) 
+        ret.attrs._deltas = deltas.reshape(batch_size, bbox * (classes + 5), grid_h, grid_w)
         # ret.attrs._cells = cells
         # ret.attrs._bbox = bbox
         # ret.attrs._classes = classes
