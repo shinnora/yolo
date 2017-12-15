@@ -141,7 +141,8 @@ def yolo_train(model, input_x, t, opt, weight_decay):
         output = model(input_x)
 
         wd = 0
-        for m in model:
+        for i in range(23):
+            m = eval("model.conv%d" % i)
             if hasattr(m, "params"):
                 w = m.params.get("w", None)
                 if w is not None:
