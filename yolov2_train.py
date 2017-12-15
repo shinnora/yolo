@@ -21,17 +21,17 @@ set_cuda_active(True)
 train_sizes = [320, 352, 384, 416, 448]
 item_path = "./items"
 background_path = "./backgrounds"
-initial_weight_file = "./backup/partial.h5"
+initial_weight_file = "./backup/10000.h5"
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
 max_batches = 30000
-learning_rate = 1e-6
+learning_rate = 1e-5
 learning_schedules = {
-    "0"    : 1e-6,
-    "500"  : 1e-5,
-    "10000": 1e-6,
-    "20000": 1e-7
+    "0"    : 1e-5,
+    "500"  : 1e-4,
+    "10000": 1e-5,
+    "20000": 1e-6
 }
 
 lr_decay_power = 4
@@ -56,14 +56,28 @@ opt = Sgd(lr=learning_rate, momentum=momentum)
 
 #trainer = Trainer(model, batch_size=32, loss_func=yolo_detector, num_epoch=1, optimizer=opt, num_gpu=num_gpu)
 
+#input_width=input_height=320
+#x, t = generator.generate_samples(
+#        n_samples=16,
+#        n_items=3,
+#        crop_width=input_width,
+#        crop_height=input_height,
+#        min_item_scale=0.1,
+#        max_item_scale=0.4,
+#        rand_angle=25,
+#        minimum_crop=0.8,
+#        delta_hue=0.01,
+#        delta_sat_scale=0.5,
+#        delta_val_scale=0.5
+#)
 # start to train
 print("start training")
 for batch in range(max_batches):
     if str(batch) in learning_schedules:
         opt._lr = learning_schedules[str(batch)]
-    if batch % 80 == 0:
-        input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
-
+    #if batch % 80 == 0:
+    #    input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
+    input_width=input_height=320
     # generate sample
     x, t = generator.generate_samples(
         n_samples=16,
@@ -71,7 +85,7 @@ for batch in range(max_batches):
         crop_width=input_width,
         crop_height=input_height,
         min_item_scale=0.1,
-        max_item_scale=0.4,
+        max_item_scale=0.2,
         rand_angle=25,
         minimum_crop=0.8,
         delta_hue=0.01,

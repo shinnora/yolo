@@ -169,7 +169,7 @@ class ImageGenerator():
                 tmp_image, bbox = random_overlay_image(sample_image, item, minimum_crop)
                 yolo_bbox = yolo_format_bbox(tmp_image, bbox)
                 box = Box(yolo_bbox[0], yolo_bbox[1], yolo_bbox[2], yolo_bbox[3])
-                if maximum_iou(box, boxes) < 0.3:
+                if maximum_iou(box, boxes) < 0.1:
                     boxes.append(box)
                     one_hot_label = np.zeros(len(self.labels))
                     one_hot_label[class_id] = 1
