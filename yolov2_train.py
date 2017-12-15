@@ -26,12 +26,12 @@ backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
 max_batches = 30000
-learning_rate = 1e-5
+learning_rate = 1e-4
 learning_schedules = {
-    "0"    : 1e-5,
-    "500"  : 1e-4,
-    "10000": 1e-5,
-    "20000": 1e-6
+    "0"    : 1e-4,
+    "500"  : 1e-3,
+    "10000": 1e-4,
+    "20000": 1e-5
 }
 
 lr_decay_power = 4
@@ -71,14 +71,28 @@ opt = Sgd(lr=learning_rate, momentum=momentum)
 #        delta_val_scale=0.5
 #)
 # start to train
+input_width=input_height=320
+x, t = generator.generate_samples(
+        n_samples=16,
+        n_items=3,
+        crop_width=input_width,
+        crop_height=input_height,
+        min_item_scale=0.1,
+        max_item_scale=0.2,
+        rand_angle=25,
+        minimum_crop=0.8,
+        delta_hue=0.01,
+        delta_sat_scale=0.5,
+        delta_val_scale=0.5
+)
 print("start training")
 for batch in range(max_batches):
     if str(batch) in learning_schedules:
         opt._lr = learning_schedules[str(batch)]
     #if batch % 80 == 0:
     #    input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
+    
     input_width=input_height=320
-    # generate sample
     x, t = generator.generate_samples(
         n_samples=16,
         n_items=3,
@@ -92,6 +106,7 @@ for batch in range(max_batches):
         delta_sat_scale=0.5,
         delta_val_scale=0.5
     )
+    # generate sample
     #x = Variable(x)
     #x.to_gpu()
     # forward
