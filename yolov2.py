@@ -135,11 +135,19 @@ class YOLOv2(rm.Model):
 #     def init_anchors(self, anchors):
 #         self.anchors = anchors
 
-def yolo_train(model, input_x, t, opt):
+
+def yolo_train(model, input_x, t, opt, weight_decay):
     with model.train():
         output = model(input_x)
-        loss = yolo_detector(output, t, bbox=model.bbox, classes=model.classes, init_anchors=model.anchors)
-    loss.to_cpu()
+
+        wd = 0
+        for m in model:
+            if hasattr(m, "params"):
+                w = m.params.get("w", None)
+                if w is not None:
+                    wd += rm.sum(w**2)
+
+        loss = yolo_detector(output, t, bbox=model.bbox, classes=model.classes, init_anchors=model.anchors) + weight_decay * wd
 
     grad = loss.grad()
     grad.update(opt)

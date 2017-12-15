@@ -71,27 +71,13 @@ opt = Sgd(lr=learning_rate, momentum=momentum)
 #        delta_val_scale=0.5
 #)
 # start to train
-input_width=input_height=320
-x, t = generator.generate_samples(
-        n_samples=16,
-        n_items=3,
-        crop_width=input_width,
-        crop_height=input_height,
-        min_item_scale=0.1,
-        max_item_scale=0.2,
-        rand_angle=25,
-        minimum_crop=0.8,
-        delta_hue=0.01,
-        delta_sat_scale=0.5,
-        delta_val_scale=0.5
-)
 print("start training")
 for batch in range(max_batches):
     if str(batch) in learning_schedules:
         opt._lr = learning_schedules[str(batch)]
     #if batch % 80 == 0:
     #    input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
-    
+
     input_width=input_height=320
     x, t = generator.generate_samples(
         n_samples=16,
@@ -110,12 +96,12 @@ for batch in range(max_batches):
     #x = Variable(x)
     #x.to_gpu()
     # forward
-    loss = yolo_train(model, x, t, opt)
+    loss = yolo_train(model, x, t, opt, weight_decay)
     #print(model.conv22.params)
     #trainer.train(train_distributor=NdarrayDistributor(x, t))
     print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, opt._lr, loss))
     print("/////////////////////////////////////")
-    
+
     # save model
     if (batch+1) % 500 == 0:
         model_file = "%s/%s.h5" % (backup_path, batch+1)
