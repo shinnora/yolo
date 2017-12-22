@@ -21,7 +21,7 @@ set_cuda_active(True)
 train_sizes = [320, 352, 384, 416, 448]
 item_path = "./items"
 background_path = "./backgrounds"
-initial_weight_file = "./backup/10000.h5"
+initial_weight_file = "./backup/yolov2_final.h5"
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
@@ -36,7 +36,7 @@ learning_schedules = {
 
 lr_decay_power = 4
 momentum = 0.9
-weight_decay = 0.005
+weight_decay = 0.0005
 classes = 10
 bbox = 5
 
@@ -75,13 +75,13 @@ print("start training")
 for batch in range(max_batches):
     if str(batch) in learning_schedules:
         opt._lr = learning_schedules[str(batch)]
-    #if batch % 80 == 0:
-    #    input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
+#    if batch % 80 == 0:
+#        input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
 
-    input_width=input_height=320
+    input_width=input_height=416
     x, t = generator.generate_samples(
-        n_samples=16,
-        n_items=3,
+        n_samples=8,
+        n_items=2,
         crop_width=input_width,
         crop_height=input_height,
         min_item_scale=0.1,

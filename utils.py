@@ -3,6 +3,7 @@
 
 import renom as rm
 import numpy as np
+import cv2
 
 def reorg(input):
     output1 = rm.concat(input[:,:,::2,::2], input[:,:,1::2,::2])

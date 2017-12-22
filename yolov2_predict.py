@@ -22,14 +22,14 @@ from darknet19 import *
 class AnimalPredictor:
 
     def __init__(self):
-        weight_file = "./backup/yolov2_final_cpu.h5"
+        weight_file = "./backup/yolov2_final.h5"
         self.classes = 10
         self.bbox = 5
         self.detection_thresh = 0.3
         self.iou_thresh = 0.3
         self.label_file = "./data/label.txt"
         with open(self.label_file, "r") as f:
-            self.labels = f.read().strip.split("\n")
+            self.labels = f.read().strip().split("\n")
 
         model = YOLOv2(classes=self.classes, bbox=self.bbox)
         model.load(weight_file)
@@ -44,7 +44,7 @@ class AnimalPredictor:
 
         x_data = img[np.newaxis, :, :, :]
         x = rm.Variable(x_data)
-        x, y, w, h, conf, prob = yolo_predict(model, x)
+        x, y, w, h, conf, prob = yolo_predict(self.model, x)
         _, _, _, grid_h, grid_w = x.shape
         x = np.reshape(x, (self.bbox, grid_h, grid_w))
         y = np.reshape(y, (self.bbox, grid_h, grid_w))
