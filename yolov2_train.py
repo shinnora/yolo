@@ -75,12 +75,12 @@ print("start training")
 for batch in range(max_batches):
     if str(batch) in learning_schedules:
         opt._lr = learning_schedules[str(batch)]
-#    if batch % 80 == 0:
-#        input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
+   if batch % 80 == 0:
+       input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
 
     input_width=input_height=416
     x, t = generator.generate_samples(
-        n_samples=8,
+        n_samples=16,
         n_items=2,
         crop_width=input_width,
         crop_height=input_height,
