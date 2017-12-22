@@ -39,9 +39,9 @@ generator = ImageGenerator(item_path, background_path)
 # load model
 print("loading model...")
 model = Darknet19(classes)
-backup_file = "%s/backup.h5" % (backup_path)
-if os.path.isfile(backup_file):
-    model.load(backup_file)
+# backup_file = "%s/backup.h5" % (backup_path)
+# if os.path.isfile(backup_file):
+#     model.load(backup_file)
 #cuda.get_device(0).use()
 #model.to_gpu() # for gpu
 
