@@ -22,7 +22,7 @@ background_path = "./backgrounds"
 backup_path = "./backup"
 batch_size = 32
 max_batches = 3000
-learning_rate = 0.1 
+learning_rate = 0.1
 lr_decay_power = 4
 momentum = 0.9
 weight_decay = 0.0005
@@ -62,7 +62,7 @@ for batch in range(max_batches):
         crop_width=input_width,
         crop_height=input_height,
         min_item_scale=0.1,
-        max_item_scale=0.4,
+        max_item_scale=0.2,
         rand_angle=25,
         minimum_crop=0.8,
         delta_hue=0.01,

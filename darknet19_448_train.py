@@ -62,7 +62,7 @@ for batch in range(max_batches):
         crop_width=input_width,
         crop_height=input_height,
         min_item_scale=0.1,
-        max_item_scale=0.4,
+        max_item_scale=0.2,
         rand_angle=25,
         minimum_crop=0.8,
         delta_hue=0.01,
