@@ -31,8 +31,7 @@ class AnimalPredictor:
         with open(self.label_file, "r") as f:
             self.labels = f.read().strip.split("\n")
 
-        yolov2 = YOLOv2(classes=self.classes, bbox=self.bbox)
-        model = YOLOv2Predictor(yolov2)
+        model = YOLOv2(classes=self.classes, bbox=self.bbox)
         model.load(weight_file)
         self.model = model
 
@@ -45,7 +44,7 @@ class AnimalPredictor:
 
         x_data = img[np.newaxis, :, :, :]
         x = rm.Variable(x_data)
-        x, y, w, h, conf, prob = self.model.predict(x)
+        x, y, w, h, conf, prob = yolo_predict(model, x)
         _, _, _, grid_h, grid_w = x.shape
         x = np.reshape(x, (self.bbox, grid_h, grid_w))
         y = np.reshape(y, (self.bbox, grid_h, grid_w))

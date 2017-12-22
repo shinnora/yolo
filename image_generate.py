@@ -11,7 +11,7 @@ generator = ImageGenerator(item_path, background_path)
 
 # generate random sample
 x, t = generator.generate_samples(
-    n_samples=64,
+    n_samples=10,
     n_items=3,
     crop_width=input_width,
     crop_height=input_height,
@@ -26,6 +26,8 @@ x, t = generator.generate_samples(
 
 for i, image in enumerate(x):
     image = np.transpose(image, (1, 2, 0)).copy()
+    cv2.imwrite("data/sample_%s.png" %(i), image*255)
+    cv2.imshow("", image)
     width, height, _ = image.shape
     for truth_box in t[i]:
         box_x, box_y, box_w, box_h = truth_box['x']*width, truth_box['y']*height, truth_box['w']*width, truth_box['h']*height
