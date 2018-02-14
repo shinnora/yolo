@@ -124,17 +124,19 @@ class yolo_detector(Node):
         #print(deltas[:,:,0:1,:,:] - ((x - tx) *box_learning_scale * (1 - x) * x))
         #print(x-tx)
         #print(deltas[:,:,0,:,:])
-        y_loss = np.sum((ty - y) ** 2 * box_learning_scale) / 2 
+        y_loss = np.sum((ty - y) ** 2 * box_learning_scale) / 2
         deltas[:,:,1:2,:,:] = ((y - ty) * box_learning_scale * (1 - y) * y).as_ndarray() * 10
-        w_loss = np.sum((tw - np.exp(w)) ** 2 * box_learning_scale) / 2 
-        deltas[:,:,2:3,:,:] = ((np.exp(w) - tw) * box_learning_scale * np.exp(w)) 
-        h_loss = np.sum((th - np.exp(h)) ** 2 * box_learning_scale) / 2 
+        w_loss = np.sum((tw - np.exp(w)) ** 2 * box_learning_scale) / 2
+        deltas[:,:,2:3,:,:] = ((np.exp(w) - tw) * box_learning_scale * np.exp(w))
+        h_loss = np.sum((th - np.exp(h)) ** 2 * box_learning_scale) / 2
         deltas[:,:,3:4,:,:] = ((np.exp(h) - th) * box_learning_scale * np.exp(h))
         c_loss = np.sum((tconf - conf) ** 2 * conf_learning_scale) / 2
         deltas[:,:,4:5,:,:] = ((conf - tconf) * conf_learning_scale * (1 - conf) * conf).as_ndarray()
         #print(deltas[:,:,4:5,:,:])
         #print(deltas[:,:,4:5,:,:] - (conf - tconf) * conf_learning_scale * (1 - conf) * conf)
         p_loss = np.sum((tprob - prob) ** 2) / 2
+        if np.isnan(p_loss):
+            p_loss = 0
         deltas[:,:,5:,:,:] = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4) * 10
         #print(deltas[:,:,5:,:,:] - ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4))
         print("x_loss: %f  y_loss: %f  w_loss: %f  h_loss: %f  c_loss: %f   p_loss: %f" %
