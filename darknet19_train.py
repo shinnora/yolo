@@ -22,7 +22,7 @@ background_path = "./backgrounds"
 backup_path = "./backup"
 batch_size = 32
 max_batches = 3000
-learning_rate = 0.1
+learning_rate = 0.01
 lr_decay_power = 4
 momentum = 0.9
 weight_decay = 0.0005
@@ -39,7 +39,7 @@ generator = ImageGenerator(item_path, background_path)
 # load model
 print("loading model...")
 model = Darknet19(classes)
-# backup_file = "%s/backup.h5" % (backup_path)
+backup_file = "%s/backup.h5" % (backup_path)
 # if os.path.isfile(backup_file):
 #     model.load(backup_file)
 #cuda.get_device(0).use()

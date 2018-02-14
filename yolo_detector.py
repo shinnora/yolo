@@ -23,7 +23,7 @@ class yolo_detector(Node):
         x = rm.sigmoid(x)
         y = rm.sigmoid(y)
         conf = rm.sigmoid(conf)
-        prob = np.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
+        prob = rm.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
         prob = rm.softmax(prob)
         # prob_exp = np.exp(prob)
         # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)

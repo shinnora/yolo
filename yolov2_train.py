@@ -18,20 +18,20 @@ np.seterr(all="raise")
 set_cuda_active(True)
 
 # hyper parameters
-train_sizes = [320, 352, 384, 416, 448]
+train_sizes = [320, 352, 384, 416]
 item_path = "./items"
 background_path = "./backgrounds"
-initial_weight_file = "./backup/yolov2_final.h5"
+initial_weight_file = "./backup/partial.h5"
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
-max_batches = 30000
-learning_rate = 1e-4
+max_batches = 60000
+learning_rate = 1e-5
 learning_schedules = {
-    "0"    : 1e-4,
-    "500"  : 1e-3,
-    "10000": 1e-4,
-    "20000": 1e-5
+    "0"    : 1e-5,
+    "500"  : 1e-4,
+    "10000": 1e-5,
+    "20000": 1e-6
 }
 
 lr_decay_power = 4
@@ -75,12 +75,12 @@ print("start training")
 for batch in range(max_batches):
     if str(batch) in learning_schedules:
         opt._lr = learning_schedules[str(batch)]
-   if batch % 80 == 0:
+    if batch % 80 == 0:
        input_width = input_height = train_sizes[np.random.randint(len(train_sizes))]
 
-    input_width=input_height=416
+
     x, t = generator.generate_samples(
-        n_samples=16,
+        n_samples=8,
         n_items=2,
         crop_width=input_width,
         crop_height=input_height,
