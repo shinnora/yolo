@@ -137,6 +137,8 @@ class yolo_detector(Node):
         p_loss = np.sum((tprob - prob) ** 2) / 2
         deltas[:,:,5:,:,:] = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4) * 10
         #print(deltas[:,:,5:,:,:] - ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4))
+        if np.isnan(p_loss):
+            p_loss = 0
         print("x_loss: %f  y_loss: %f  w_loss: %f  h_loss: %f  c_loss: %f   p_loss: %f" %
             (x_loss, y_loss, w_loss, h_loss, c_loss, p_loss)
         )
