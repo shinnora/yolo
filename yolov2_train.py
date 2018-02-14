@@ -21,7 +21,7 @@ set_cuda_active(True)
 train_sizes = [320, 352, 384, 416]
 item_path = "./items"
 background_path = "./backgrounds"
-initial_weight_file = "./backup/10000.h5"
+initial_weight_file = "./backup/partial.h5"
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
