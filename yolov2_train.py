@@ -21,7 +21,7 @@ set_cuda_active(True)
 train_sizes = [320, 352, 384, 416]
 item_path = "./items"
 background_path = "./backgrounds"
-initial_weight_file = "./backup/partial.h5"
+initial_weight_file = backup_file
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 batch_size = 16
@@ -29,9 +29,9 @@ max_batches = 60000
 learning_rate = 1e-5
 learning_schedules = {
     "0"    : 1e-5,
-    "500"  : 1e-4,
-    "10000": 1e-5,
-    "20000": 1e-6
+    "1000"  : 1e-4,
+    "20000": 1e-5,
+    "40000": 1e-6
 }
 
 lr_decay_power = 4
