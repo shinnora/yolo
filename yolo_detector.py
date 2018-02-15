@@ -23,7 +23,7 @@ class yolo_detector(Node):
         x = rm.sigmoid(x)
         y = rm.sigmoid(y)
         conf = rm.sigmoid(conf)
-        prob = rm.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
+        prob = np.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
         prob = rm.softmax(prob)
         # prob_exp = np.exp(prob)
         # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
@@ -135,7 +135,7 @@ class yolo_detector(Node):
         #print(deltas[:,:,4:5,:,:])
         #print(deltas[:,:,4:5,:,:] - (conf - tconf) * conf_learning_scale * (1 - conf) * conf)
         p_loss = np.sum((tprob - prob) ** 2) / 2
-        p_delta = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4) 
+        p_delta = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4)
         p_delta[np.isnan(p_delta)] = 0
         deltas[:,:,5:,:,:] = p_delta
         #print(deltas[:,:,5:,:,:] - ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4))
