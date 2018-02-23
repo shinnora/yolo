@@ -23,7 +23,7 @@ class yolo_detector(Node):
         x = rm.sigmoid(x)
         y = rm.sigmoid(y)
         conf = rm.sigmoid(conf)
-        prob = rm.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
+        prob = np.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
         prob = rm.softmax(prob)
         # prob_exp = np.exp(prob)
         # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
@@ -111,21 +111,21 @@ class yolo_detector(Node):
                 )
                 predicted_iou = box_iou(full_truth_box, predicted_box)
                 tconf[batch, truth_n, :, truth_h, truth_w] = predicted_iou
-                conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 5.0
+                conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 10.0
 
         #box_learning_scale *= 100
         #loss
         #print(np.where(box_learning_scale==1))
         x_loss = np.sum((tx - x) ** 2 * box_learning_scale) / 2
         #print(deltas[:,:,0:1,:,:])
-        deltas[:,:,0:1,:,:] = ((x - tx) * box_learning_scale * (1 - x) * x).as_ndarray() * 10
+        deltas[:,:,0:1,:,:] = ((x - tx) * box_learning_scale * (1 - x) * x).as_ndarray()
         #print(deltas.dtype())
         #print((x - tx).dtype())
         #print(deltas[:,:,0:1,:,:] - ((x - tx) *box_learning_scale * (1 - x) * x))
         #print(x-tx)
         #print(deltas[:,:,0,:,:])
         y_loss = np.sum((ty - y) ** 2 * box_learning_scale) / 2
-        deltas[:,:,1:2,:,:] = ((y - ty) * box_learning_scale * (1 - y) * y).as_ndarray() * 10
+        deltas[:,:,1:2,:,:] = ((y - ty) * box_learning_scale * (1 - y) * y).as_ndarray()
         w_loss = np.sum((tw - np.exp(w)) ** 2 * box_learning_scale) / 2
         deltas[:,:,2:3,:,:] = ((np.exp(w) - tw) * box_learning_scale * np.exp(w))
         h_loss = np.sum((th - np.exp(h)) ** 2 * box_learning_scale) / 2
@@ -135,7 +135,9 @@ class yolo_detector(Node):
         #print(deltas[:,:,4:5,:,:])
         #print(deltas[:,:,4:5,:,:] - (conf - tconf) * conf_learning_scale * (1 - conf) * conf)
         p_loss = np.sum((tprob - prob) ** 2) / 2
-        deltas[:,:,5:,:,:] = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4) * 10
+        p_delta = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4)
+        p_delta[np.isnan(p_delta)] = 0
+        deltas[:,:,5:,:,:] = p_delta
         #print(deltas[:,:,5:,:,:] - ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4))
         if np.isnan(p_loss):
             p_loss = 0
