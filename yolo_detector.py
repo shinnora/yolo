@@ -84,8 +84,8 @@ class yolo_detector(Node):
         abs_anchors = anchors / np.array([grid_w, grid_h])
         for batch in range(batch_size):
             for truth_box in t[batch]:
-                truth_h = int(float(truth_box["x"]) * grid_w)
-                truth_w = int(float(truth_box["y"]) * grid_h)
+                truth_w = int(float(truth_box["x"]) * grid_w)
+                truth_h = int(float(truth_box["y"]) * grid_h)
                 truth_n = 0
                 best_iou = 0.0
                 for anchor_index, abs_anchor in enumerate(abs_anchors):
