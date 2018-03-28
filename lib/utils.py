@@ -44,15 +44,15 @@ def print_fc_info(name, link, time):
 # x, y, w, hの4パラメータを保持するだけのクラス
 class Box():
     def __init__(self, x, y, w, h):
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
+        self.x = float(x)
+        self.y = float(y)
+        self.w = float(w)
+        self.h = float(h)
 
     def int_left_top(self):
         half_width = self.w / 2
         half_height = self.h / 2
-        return (int(round(self.x - half_width)), int(round(self.y - half_height)))
+        return (int(round(float(self.x - half_width))), int(round(float(self.y - half_height))))
 
     def left_top(self):
         half_width = self.w / 2
@@ -62,7 +62,7 @@ class Box():
     def int_right_bottom(self):
         half_width = self.w / 2
         half_height = self.h / 2
-        return (int(round(self.x + half_width)), int(round(self.y + half_height)))
+        return (int(round(float(self.x + half_width))), int(round(float(self.y + half_height))))
 
     def right_bottom(self):
         half_width = self.w / 2

@@ -3,8 +3,8 @@ import numpy as np
 from lib.image_generator import *
 
 print("loading image generator...")
-input_width = 448
-input_height = 448
+input_width = 416
+input_height = 416
 item_path = "./items"
 background_path = "./backgrounds"
 generator = ImageGenerator(item_path, background_path)

@@ -20,16 +20,18 @@ class yolo_detector(Node):
         batch_size, _, grid_h, grid_w = output.shape
         output_reshape = rm.reshape(output, (batch_size, bbox, classes+5, grid_h, grid_w))
         x, y, w, h, conf, prob = output_reshape[:,:,0:1,:,:], output_reshape[:,:,1:2,:,:],output_reshape[:,:,2:3,:,:], output_reshape[:,:,3:4,:,:], output_reshape[:,:,4:5,:,:], output_reshape[:,:,5:,:,:]
+        #print(np.isnan(conf).any())
         x = rm.sigmoid(x)
         y = rm.sigmoid(y)
         conf = rm.sigmoid(conf)
+        #print(np.isnan(conf).any())
         prob = np.transpose(prob, (0, 2, 1, 3, 4)).reshape(batch_size, classes, -1)
         prob = rm.softmax(prob)
         # prob_exp = np.exp(prob)
         # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
         prob = rm.reshape(prob, (batch_size, classes, bbox, grid_h, grid_w))
         deltas = np.zeros(output_reshape.shape, dtype=np.float32)
-
+        print(np.isnan(conf).any())
         #x.to_cpu()
         #y.to_cpu()
         #conf.to_cpu()
@@ -49,7 +51,7 @@ class yolo_detector(Node):
         box_learning_scale = np.tile(0.1, x.shape).astype(np.float32)
 
         tconf = np.zeros(conf.shape, dtype=np.float32)
-        conf_learning_scale = np.tile(0.1, conf.shape).astype(np.float32)
+        conf_learning_scale = np.tile(1, conf.shape).astype(np.float32)
 
         tprob = prob.as_ndarray()
         #print("output")
@@ -78,14 +80,16 @@ class yolo_detector(Node):
             ious = np.array(ious)
             best_ious.append(np.max(ious, axis=0))
         best_ious = np.array(best_ious)
+        print(np.isnan(best_ious).any())
         tconf[best_ious > thresh] = conf[best_ious > thresh]
         conf_learning_scale[best_ious > thresh] = 0
+        print(np.isnan(tconf).any())
 
         abs_anchors = anchors / np.array([grid_w, grid_h])
         for batch in range(batch_size):
             for truth_box in t[batch]:
-                truth_h = int(float(truth_box["x"]) * grid_w)
-                truth_w = int(float(truth_box["y"]) * grid_h)
+                truth_w = int(float(truth_box["x"]) * grid_w)
+                truth_h = int(float(truth_box["y"]) * grid_h)
                 truth_n = 0
                 best_iou = 0.0
                 for anchor_index, abs_anchor in enumerate(abs_anchors):
@@ -111,7 +115,7 @@ class yolo_detector(Node):
                 )
                 predicted_iou = box_iou(full_truth_box, predicted_box)
                 tconf[batch, truth_n, :, truth_h, truth_w] = predicted_iou
-                conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 10.0
+                conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 5.0
 
         #box_learning_scale *= 100
         #loss
@@ -130,17 +134,19 @@ class yolo_detector(Node):
         deltas[:,:,2:3,:,:] = ((np.exp(w) - tw) * box_learning_scale * np.exp(w))
         h_loss = np.sum((th - np.exp(h)) ** 2 * box_learning_scale) / 2
         deltas[:,:,3:4,:,:] = ((np.exp(h) - th) * box_learning_scale * np.exp(h))
-        c_loss = np.sum((tconf - conf) ** 2 * conf_learning_scale) / 2
+        c_loss = np.sum(((tconf - conf) * np.sqrt(conf_learning_scale)) ** 2) / 2
+        # print(np.isnan((tconf-conf.as_ndarray())**2 * conf_learning_scale).any())
+        #
+        # print(np.isnan(c_loss).any())
         deltas[:,:,4:5,:,:] = ((conf - tconf) * conf_learning_scale * (1 - conf) * conf).as_ndarray()
         #print(deltas[:,:,4:5,:,:])
         #print(deltas[:,:,4:5,:,:] - (conf - tconf) * conf_learning_scale * (1 - conf) * conf)
         p_loss = np.sum((tprob - prob) ** 2) / 2
         p_delta = ((((prob - tprob) * (1 - prob) * prob)).as_ndarray()).transpose(0, 2, 1, 3, 4)
-        p_delta[np.isnan(p_delta)] = 0
         deltas[:,:,5:,:,:] = p_delta
         #print(deltas[:,:,5:,:,:] - ((prob - tprob) * (1 - prob) * prob).transpose(0, 2, 1, 3, 4))
-        if np.isnan(p_loss):
-            p_loss = 0
+        # if np.isnan(p_loss):
+        #     p_loss = 0
         print("x_loss: %f  y_loss: %f  w_loss: %f  h_loss: %f  c_loss: %f   p_loss: %f" %
             (x_loss, y_loss, w_loss, h_loss, c_loss, p_loss)
         )

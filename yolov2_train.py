@@ -6,14 +6,12 @@ import os
 import renom as rm
 from renom.optimizer import Sgd
 from renom.utility.trainer import Trainer
-from renom.cuda.cuda import set_cuda_active, cuGetDeviceCount, cuDeviceSynchronize
+from renom.cuda.cuda import set_cuda_active
 from renom import cuda
 from renom.utility.distributor import NdarrayDistributor
 from yolov2 import *
 from lib.utils import *
 from lib.image_generator import *
-
-np.seterr(all="raise")
 
 set_cuda_active(True)
 
@@ -23,8 +21,8 @@ item_path = "./items"
 background_path = "./backgrounds"
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
-initial_weight_file = backup_file
-batch_size = 16
+initial_weight_file = "%s/500.h5" % (backup_path)
+batch_size = 8
 max_batches = 60000
 learning_rate = 1e-5
 learning_schedules = {
@@ -48,7 +46,7 @@ generator = ImageGenerator(item_path, background_path)
 print("loading initial model...")
 model = YOLOv2(classes=classes, bbox=bbox)
 model.load(initial_weight_file)
-num_gpu = cuGetDeviceCount()
+#num_gpu = cuGetDeviceCount()
 
 #model.to_gpu()
 
@@ -80,8 +78,8 @@ for batch in range(max_batches):
 
 
     x, t = generator.generate_samples(
-        n_samples=8,
-        n_items=2,
+        n_samples=batch_size,
+        n_items=3,
         crop_width=input_width,
         crop_height=input_height,
         min_item_scale=0.1,

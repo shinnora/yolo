@@ -23,7 +23,7 @@ class Box():
     def int_left_top(self):
         half_width = self.w / 2
         half_height = self.h / 2
-        return (int(round(self.x - half_width)), int(round(self.y - half_height)))
+        return (int(round(float(self.x - half_width))), int(round(float(self.y - half_height))))
 
     def left_top(self):
         half_width = self.w / 2
@@ -33,7 +33,7 @@ class Box():
     def int_right_bottom(self):
         half_width = self.w / 2
         half_height = self.h / 2
-        return (int(round(self.x + half_width)), int(round(self.y + half_height)))
+        return (int(round(float(self.x + half_width))), int(round(float(self.y + half_height))))
 
     def right_bottom(self):
         half_width = self.w / 2

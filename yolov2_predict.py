@@ -22,10 +22,10 @@ from darknet19 import *
 class AnimalPredictor:
 
     def __init__(self):
-        weight_file = "./backup/yolov2_final.h5"
+        weight_file = "./backup/500.h5"
         self.classes = 10
         self.bbox = 5
-        self.detection_thresh = 0.3
+        self.detection_thresh = 0.05
         self.iou_thresh = 0.3
         self.label_file = "./data/label.txt"
         with open(self.label_file, "r") as f:
@@ -69,6 +69,7 @@ class AnimalPredictor:
             })
 
         # nms
+        print(results)
         nms_results = nms(results, self.iou_thresh)
         return nms_results
 
@@ -99,3 +100,5 @@ if __name__ == '__main__':
         text = '%s(%2d%%)' % (result["label"], result["probs"].max()*result["conf"]*100)
         cv2.putText(orig_img, text, (left, top-6), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         print(text)
+    print(image_file)
+    cv2.imwrite('detect.png', orig_img)
