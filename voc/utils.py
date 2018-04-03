@@ -10,10 +10,10 @@ import urllib.request as request
 class VOCgenerator():
 
     def __init__(self, ann_path="VOCdevkit/VOC2012/Annotations/", img_path="VOCdevkit/VOC2012/JPEGImages/"):
+        self.ann_path = ann_path
         self.img_path = img_path
         self.train_file_list = [path for path in sorted(os.listdir(ann_path)) if not "2012_" in path]
         self.test_file_list = [path for path in os.listdir(ann_path) if "2012_" in path]
-        self.tree = ElementTree.parse(os.path.join(dataset_path, train_file_list[-1]))
         self.cat_num = 20
         self.label_dict = {}
 
@@ -48,7 +48,7 @@ class VOCgenerator():
         class_name = obj.find("name").text.strip()
         if self.label_dict.get(class_name, None) is None:
             self.label_dict[class_name] = len(self.label_dict)
-        class_id = label_dict[class_name]
+        class_id = self.label_dict[class_name]
         bbox = obj.find("bndbox")
         xmax = float(bbox.find("xmax").text.strip())
         xmin = float(bbox.find("xmin").text.strip())
@@ -61,7 +61,7 @@ class VOCgenerator():
         return class_id, x, y, w, h
 
     def _get_img_info(self, filename):
-        tree = ElementTree.parse(filename)
+        tree = ElementTree.parse(os.path.join(self.ann_path, filename))
         node = tree.getroot()
         file_name = node.find("filename").text.strip()
         img_h = float(node.find("size").find("height").text.strip())
@@ -79,7 +79,6 @@ class VOCgenerator():
                 "one_hot_label" : self.one_hot(class_id)
             })
         return file_name, ground_truths
-
 
 
 def reshape_to_yolo_size(img):
