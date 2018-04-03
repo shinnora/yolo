@@ -38,7 +38,7 @@ backup_file = "%s/backup.h5" % (backup_path)
 #model.to_gpu() # for gpu
 
 trainer = Trainer(model,
-                  batch_size=32,
+                  batch_size=batch_size,
                   loss_func=rm.mean_squared_error,
                   num_epoch=1,
                   optimizer=rm.Sgd(lr=learning_rate, momentum=momentum), num_gpu=num_gpu)
