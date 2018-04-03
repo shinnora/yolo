@@ -21,8 +21,9 @@ item_path = "./items"
 background_path = "./backgrounds"
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
+pretrained_weight_file = "%s/darknet19_448_final.h5" % (backup_path)
 initial_weight_file = "%s/500.h5" % (backup_path)
-batch_size = 8
+batch_size = 32
 max_batches = 60000
 learning_rate = 1e-5
 learning_schedules = {
@@ -44,8 +45,9 @@ generator = ImageGenerator(item_path, background_path)
 
 # load model
 print("loading initial model...")
-model = YOLOv2(classes=classes, bbox=bbox)
-model.load(initial_weight_file)
+pretrained_model = Pretrained(classes=classes)
+yolo_model = YOLOv2(classes=classes, bbox=bbox)
+pretrained_model.load(pretrained_weight_file)
 #num_gpu = cuGetDeviceCount()
 
 #model.to_gpu()
@@ -94,7 +96,7 @@ for batch in range(max_batches):
     #x = Variable(x)
     #x.to_gpu()
     # forward
-    loss = yolo_train(model, x, t, opt, weight_decay)
+    loss = yolo_train(yolo_model, pretrained_model, x, t, opt, weight_decay)
     #print(model.conv22.params)
     #trainer.train(train_distributor=NdarrayDistributor(x, t))
     print("batch: %d     input size: %dx%d     learning rate: %f    loss: %f" % (batch, input_height, input_width, opt._lr, loss))
@@ -104,11 +106,11 @@ for batch in range(max_batches):
     if (batch+1) % 500 == 0:
         model_file = "%s/%s.h5" % (backup_path, batch+1)
         print("saving model to %s" % (model_file))
-        model.save(model_file)
-        model.save(backup_file)
+        yolo_model.save(model_file)
+        yolo_model.save(backup_file)
 
 print("saving model to %s/yolov2_final.h5" % (backup_path))
-model.save("%s/yolov2_final.h5" % (backup_path))
+yolo_model.save("%s/yolov2_final.h5" % (backup_path))
 
-model.to_cpu()
-model.save("%s/yolov2_final_cpu.h5" % (backup_path))
+yolo_model.to_cpu()
+yolo_model.save("%s/yolov2_final_cpu.h5" % (backup_path))

@@ -17,15 +17,12 @@ from renom.core import DEBUG_NODE_STAT, DEBUG_GRAPH_INIT, DEBUG_NODE_GRAPH
 
 from yolo_detector import *
 
-class YOLOv2(rm.Model):
 
-    def __init__(self, classes, bbox):
-        super(YOLOv2, self).__init__()
+class Pretrained(rm.Model):
 
-        self.bbox = bbox
+    def __init__(self, classes):
+        super(Pretrained, self).__init__()
         self.classes = classes
-        self.anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
-        self.thresh = 0.6
 
             ##### common layers for both pretrained layers and yolov2 #####
         self.conv1  = rm.Conv2d(channel=32, filter=3, stride=1, padding=1)
@@ -70,20 +67,8 @@ class YOLOv2(rm.Model):
         self.conv18  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
         self.bn18 = rm.BatchNormalize(mode='feature')
 
-        ###### pretraining layer
+        ###### pretraining layer(not used)
         self.conv23 = rm.Conv2d(channel=classes, filter=1, stride=1, padding=0)
-
-        ###### detection layer
-        self.conv19  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
-        self.bn19 = rm.BatchNormalize(mode='feature')
-        self.conv20  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
-        self.bn20 = rm.BatchNormalize(mode='feature')
-        self.conv21  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1) ##input=3072
-        self.bn21 = rm.BatchNormalize(mode='feature')
-        self.conv22  = rm.Conv2d(channel=bbox * (5 + classes), filter=1, stride=1, padding=0)
-
-
-
 
     def forward(self, x):
         h = self.pool1(rm.leaky_relu(self.bn1(self.conv1(x)), slope=0.1))
@@ -107,8 +92,32 @@ class YOLOv2(rm.Model):
         h = rm.leaky_relu(self.bn17(self.conv17(h)), slope=0.1)
         h = rm.leaky_relu(self.bn18(self.conv18(h)), slope=0.1)
 
+        return h, high_resolution_feature
+
+
+
+class YOLOv2(rm.Model):
+
+    def __init__(self, classes, bbox):
+        super(YOLOv2, self).__init__()
+
+        self.bbox = bbox
+        self.classes = classes
+        self.anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
+        self.thresh = 0.6
+
+        ###### detection layer
+        self.conv19  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
+        self.bn19 = rm.BatchNormalize(mode='feature')
+        self.conv20  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
+        self.bn20 = rm.BatchNormalize(mode='feature')
+        self.conv21  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1) ##input=3072
+        self.bn21 = rm.BatchNormalize(mode='feature')
+        self.conv22  = rm.Conv2d(channel=bbox * (5 + classes), filter=1, stride=1, padding=0)
+
+    def forward(self, x, high_resolution_feature):
         ##### detection layer
-        h = rm.leaky_relu(self.bn19(self.conv19(h)), slope=0.1)
+        h = rm.leaky_relu(self.bn19(self.conv19(x)), slope=0.1)
         h = rm.leaky_relu(self.bn20(self.conv20(h)), slope=0.1)
         h = rm.concat(high_resolution_feature, h)
         h = rm.leaky_relu(self.bn21(self.conv21(h)), slope=0.1)
@@ -136,19 +145,20 @@ class YOLOv2(rm.Model):
 #         self.anchors = anchors
 
 
-def yolo_train(model, input_x, t, opt, weight_decay):
-    with model.train():
-        output = model(input_x)
+def yolo_train(yolo_model, pretrained_model, input_x, t, opt, weight_decay):
+    with yolo_model.train():
+        pretrained_x = pretrained_model(input_x)
+        output = yolo_model(*pretrained_x)
 
         wd = 0
-        for i in range(1, 23):
-            m = eval("model.conv%d" % i)
+        for i in range(19, 23):
+            m = eval("yolo_model.conv%d" % i)
             if hasattr(m, "params"):
                 w = m.params.get("w", None)
                 if w is not None:
                     wd += rm.sum(w**2)
 
-        loss = yolo_detector(output, t, bbox=model.bbox, classes=model.classes, init_anchors=model.anchors) + weight_decay * wd
+        loss = yolo_detector(output, t, bbox=yolo_model.bbox, classes=yolo_model.classes, init_anchors=yolo_model.anchors) + weight_decay * wd
 
     grad = loss.grad()
     grad.update(opt)
