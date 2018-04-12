@@ -110,6 +110,7 @@ class ImageGenerator():
             pixels[y:y+image.shape[0], x:x+image.shape[1], :] = image
             self.items.append(pixels.astype(np.uint8))
             self.labels.append(item_file.split("/")[-1].split(".")[0])
+        print(self.labels)
 
         for bg_file in self.bg_files:
             self.bgs.append(cv2.imread(bg_file))

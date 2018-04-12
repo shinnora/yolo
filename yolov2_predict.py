@@ -22,16 +22,15 @@ from darknet19 import *
 class AnimalPredictor:
 
     def __init__(self):
-        yolo_weight_file = "./backup/yolov2_final.h5"
+        yolo_weight_file = "./backup/backup.h5"
         pretrained_weight_file = "./backup/darknet19_448_final.h5"
         self.classes = 10
         self.bbox = 5
-        self.detection_thresh = 0.05
+        self.detection_thresh = 0.02
         self.iou_thresh = 0.3
         self.label_file = "./data/label.txt"
         with open(self.label_file, "r") as f:
             self.labels = f.read().strip().split("\n")
-
         yolo_model = YOLOv2(classes=self.classes, bbox=self.bbox)
         yolo_model.load(yolo_weight_file)
         pretrained_model = Pretrained(classes=self.classes)
