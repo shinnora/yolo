@@ -22,7 +22,8 @@ from darknet19 import *
 class AnimalPredictor:
 
     def __init__(self):
-        weight_file = "./backup/500.h5"
+        yolo_weight_file = "./backup/yolov2_final.h5"
+        pretrained_weight_file = "./backup/darknet19_448_final.h5"
         self.classes = 10
         self.bbox = 5
         self.detection_thresh = 0.05
@@ -31,9 +32,12 @@ class AnimalPredictor:
         with open(self.label_file, "r") as f:
             self.labels = f.read().strip().split("\n")
 
-        model = YOLOv2(classes=self.classes, bbox=self.bbox)
-        model.load(weight_file)
-        self.model = model
+        yolo_model = YOLOv2(classes=self.classes, bbox=self.bbox)
+        yolo_model.load(yolo_weight_file)
+        pretrained_model = Pretrained(classes=self.classes)
+        pretrained_model.load(pretrained_weight_file)
+        self.yolo_model = yolo_model
+        self.pretrained_model = pretrained_model
 
     def __call__(self, orig_img):
         orig_input_height, orig_input_width, _ = orig_img.shape
@@ -44,7 +48,7 @@ class AnimalPredictor:
 
         x_data = img[np.newaxis, :, :, :]
         x = rm.Variable(x_data)
-        x, y, w, h, conf, prob = yolo_predict(self.model, x)
+        x, y, w, h, conf, prob = yolo_predict(self.yolo_model, self.pretrained_model, x)
         _, _, _, grid_h, grid_w = x.shape
         x = np.reshape(x, (self.bbox, grid_h, grid_w))
         y = np.reshape(y, (self.bbox, grid_h, grid_w))

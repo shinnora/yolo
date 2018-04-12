@@ -42,7 +42,7 @@ class yolo_detector(Node):
         else:
             anchors = init_anchors
 
-        thresh = 0.7
+        thresh = 0.6
         # 教師データ
         tw = np.ones(w.shape, dtype=np.float32)
         th = np.ones(h.shape, dtype=np.float32)
@@ -107,6 +107,7 @@ class yolo_detector(Node):
                 th[batch, truth_n, :, truth_h, truth_w] = float(truth_box["h"]) / abs_anchors[truth_n][1]
                 tprob[batch, :, truth_n, truth_h, truth_w] = 0
                 tprob[batch, int(truth_box["label"]), truth_n, truth_h, truth_w] = 1
+                #print(tprob[batch, :, truth_n, truth_h, truth_w]- prob[batch, :, truth_n, truth_h, truth_w] )
 
                 full_truth_box = Box(float(truth_box["x"]), float(truth_box["y"]), float(truth_box["w"]), float(truth_box["h"]))
                 predicted_box = Box(
@@ -117,7 +118,7 @@ class yolo_detector(Node):
                 )
                 predicted_iou = box_iou(full_truth_box, predicted_box)
                 tconf[batch, truth_n, :, truth_h, truth_w] = predicted_iou
-                conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 5.0
+                conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 10.0
 
         #box_learning_scale *= 100
         #loss

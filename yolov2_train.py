@@ -22,7 +22,7 @@ background_path = "./backgrounds"
 backup_path = "backup"
 backup_file = "%s/backup.h5" % (backup_path)
 pretrained_weight_file = "%s/darknet19_448_final.h5" % (backup_path)
-initial_weight_file = "%s/500.h5" % (backup_path)
+initial_weight_file = "%s/backup.h5" % (backup_path)
 batch_size = 32
 max_batches = 60000
 learning_rate = 1e-5
@@ -48,6 +48,7 @@ print("loading initial model...")
 pretrained_model = Pretrained(classes=classes)
 yolo_model = YOLOv2(classes=classes, bbox=bbox)
 pretrained_model.load(pretrained_weight_file)
+yolo_model.load(initial_weight_file)
 #num_gpu = cuGetDeviceCount()
 
 #model.to_gpu()

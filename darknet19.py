@@ -17,13 +17,10 @@ from renom.core import DEBUG_NODE_STAT, DEBUG_GRAPH_INIT, DEBUG_NODE_GRAPH
 
 from yolo_detector import *
 
-
-class Pretrained(rm.Model):
+class Darknet19(rm.Model):
 
     def __init__(self, classes):
-        super(Pretrained, self).__init__()
-        self.classes = classes
-
+        super(Darknet19, self).__init__()
             ##### common layers for both pretrained layers and yolov2 #####
         self.conv1  = rm.Conv2d(channel=32, filter=3, stride=1, padding=1)
         self.bn1 = rm.BatchNormalize(mode='feature')
@@ -67,8 +64,10 @@ class Pretrained(rm.Model):
         self.conv18  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
         self.bn18 = rm.BatchNormalize(mode='feature')
 
-        ###### pretraining layer(not used)
+        ###### pretraining layer
         self.conv23 = rm.Conv2d(channel=classes, filter=1, stride=1, padding=0)
+
+
 
     def forward(self, x):
         h = self.pool1(rm.leaky_relu(self.bn1(self.conv1(x)), slope=0.1))
@@ -84,7 +83,6 @@ class Pretrained(rm.Model):
         h = rm.leaky_relu(self.bn11(self.conv11(h)), slope=0.1)
         h = rm.leaky_relu(self.bn12(self.conv12(h)), slope=0.1)
         h = rm.leaky_relu(self.bn13(self.conv13(h)), slope=0.1)
-        high_resolution_feature = reorg(h) # 高解像度特徴量をreorgでサイズ落として保存しておく
         h = self.pool5(h)
         h = rm.leaky_relu(self.bn14(self.conv14(h)), slope=0.1)
         h = rm.leaky_relu(self.bn15(self.conv15(h)), slope=0.1)
@@ -92,100 +90,31 @@ class Pretrained(rm.Model):
         h = rm.leaky_relu(self.bn17(self.conv17(h)), slope=0.1)
         h = rm.leaky_relu(self.bn18(self.conv18(h)), slope=0.1)
 
-        return h, high_resolution_feature
+        ##### pretraining layer
+        h = self.conv23(h)
+        h = rm.average_pool2d(h, filter=(h.shape[-1], h.shape[-1]), stride=(1, 1), padding=(0, 0))
 
+        y = rm.reshape(h, (x.shape[0], -1))
 
+        return y
 
-class YOLOv2(rm.Model):
+class Darknet19Predictor(rm.Model):
+    def __init__(self, predictor):
+        super(Darknet19Predictor, self).__init__(predictor=predictor)
 
-    def __init__(self, classes, bbox):
-        super(YOLOv2, self).__init__()
+    def __call__(self, x, t):
+        y = self.predictor(x)
 
-        self.bbox = bbox
-        self.classes = classes
-        self.anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
-        self.thresh = 0.6
+        # if t.ndim == 2: # use squared error when label is one hot label
+        #     y = rm.softmax(y)
+        #     # loss = F.mean_squared_error(y, t)
+        #     loss = rm.mean_squared_error(y, t)
+        #     accuracy = rm.accuracy(y, t.argmax(axis=1).astype(np.int32))
+        # else: # use softmax cross entropy when label is normal label
+        loss = rm.softmax_cross_entropy(y, t)
 
-        ###### detection layer
-        self.conv19  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
-        self.bn19 = rm.BatchNormalize(mode='feature')
-        self.conv20  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
-        self.bn20 = rm.BatchNormalize(mode='feature')
-        self.conv21  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1) ##input=3072
-        self.bn21 = rm.BatchNormalize(mode='feature')
-        self.conv22  = rm.Conv2d(channel=bbox * (5 + classes), filter=1, stride=1, padding=0)
+        return loss
 
-    def forward(self, x, high_resolution_feature):
-        ##### detection layer
-        h = rm.leaky_relu(self.bn19(self.conv19(x)), slope=0.1)
-        h = rm.leaky_relu(self.bn20(self.conv20(h)), slope=0.1)
-        h = rm.concat(high_resolution_feature, h)
-        h = rm.leaky_relu(self.bn21(self.conv21(h)), slope=0.1)
-        h = self.conv22(h)
-
-        return h
-
-    def init_anchors(self, anchors):
-        self.anchors = anchors
-
-
-
-
-#
-# class YOLOv2Predictor(rm.Model):
-#
-#     def __init__(self, predictor):
-#         super(YOLOv2Predictor, self).__init__(predictor=predictor)
-#         self.anchors = [[5.375, 5.03125], [5.40625, 4.6875], [2.96875, 2.53125], [2.59375, 2.78125], [1.9375, 3.25]]
-#         self.thresh = 0.6
-#         # self.seen = 0
-#         # self.unstable_seen = 5000
-#
-#     def init_anchors(self, anchors):
-#         self.anchors = anchors
-
-
-def yolo_train(yolo_model, pretrained_model, input_x, t, opt, weight_decay):
-    with yolo_model.train():
-        pretrained_x = pretrained_model(input_x)
-        output = yolo_model(*pretrained_x)
-
-        wd = 0
-        for i in range(19, 23):
-            m = eval("yolo_model.conv%d" % i)
-            if hasattr(m, "params"):
-                w = m.params.get("w", None)
-                if w is not None:
-                    wd += rm.sum(w**2)
-
-        loss = yolo_detector(output, t, bbox=yolo_model.bbox, classes=yolo_model.classes, init_anchors=yolo_model.anchors) + weight_decay * wd
-
-    grad = loss.grad()
-    grad.update(opt)
-    return loss
-
-def yolo_predict(yolo_model, pretrained_model, input_x):
-    pretrained_x = pretrained_model(input_x)
-    output = yolo_model(*pretrained_x)
-    batch_size, _, grid_h, grid_w = output.shape
-    output_reshape = np.reshape(output, (batch_size, yolo_model.bbox, yolo_model.classes+5, grid_h, grid_w))
-    x, y, w, h, conf, prob = output_reshape[:,:,0:1,:,:], output_reshape[:,:,1:2,:,:],output_reshape[:,:,2:3,:,:], output_reshape[:,:,3:4,:,:], output_reshape[:,:,4:5,:,:], output_reshape[:,:,5:,:,:]
-    x = rm.sigmoid(x) # xのactivation
-    y = rm.sigmoid(y) # yのactivation
-    conf = rm.sigmoid(conf) # confのactivation
-    prob = np.transpose(prob, (0, 2, 1, 3, 4))
-    prob = rm.softmax(prob) # probablitiyのacitivation
-    prob = np.transpose(prob, (0, 2, 1, 3, 4))
-
-    # x, y, w, hを絶対座標へ変換
-    x_shift = np.broadcast_to(np.arange(grid_w, dtype=np.float32), x.shape)
-    y_shift = np.broadcast_to(np.arange(grid_h, dtype=np.float32).reshape(grid_h, 1), y.shape)
-    w_anchor = np.broadcast_to(np.reshape(np.array(yolo_model.anchors, dtype=np.float32)[:, 0], (yolo_model.bbox, 1, 1, 1)), w.shape)
-    h_anchor = np.broadcast_to(np.reshape(np.array(yolo_model.anchors, dtype=np.float32)[:, 1], (yolo_model.bbox, 1, 1, 1)), h.shape)
-    #x_shift.to_gpu(), y_shift.to_gpu(), w_anchor.to_gpu(), h_anchor.to_gpu()
-    box_x = (x + x_shift) / grid_w
-    box_y = (y + y_shift) / grid_h
-    box_w = np.exp(w) * w_anchor / grid_w
-    box_h = np.exp(h) * h_anchor / grid_h
-
-    return box_x, box_y, box_w, box_h, conf, prob
+    def predict(self, x):
+        y = self.predictor(x)
+        return rm.softmax(y)
