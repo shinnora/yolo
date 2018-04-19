@@ -23,7 +23,7 @@ class VOCgenerator():
         one_hot_label[id] = 1
         return one_hot_label
 
-    def generate_samples(self, batch_size, size, train=True):
+    def generate_samples(self, batch_size, size=None, train=True):
         if train:
             file_list = self.train_file_list
         else:
@@ -32,12 +32,14 @@ class VOCgenerator():
         for batch_num in range(int(len(img_order) / batch_size)):
             x = []
             t = []
-            augmenter = DataAugmentation([Color_jitter(s=(1.0,1.5), v=(1.0,1.5)),Resize(size=size)])
             for img_num in img_order[batch_num * batch_size : (batch_num + 1) * batch_size]:
                 file_name, ground_truths = self._get_img_info(file_list[img_num])
                 img_path = os.path.join(self.img_path, file_name)
-                img = augmenter.create(np.asarray(cv2.imread(img_path), dtype=np.float32)) / 255.0
-                img = img.transpose(2, 0, 1)
+                if size is None:
+                    img = reshape_to_yolo_size(cv2.imread(img_path))
+                else:
+                    img = cv2.resize(cv2.imread(img_path), size)
+                img = (random_hsv_image(img, 0, 0.5, 0.5) / 255.0).transpose(2,0,1)
                 x.append(img)
                 t.append(ground_truths)
             yield x, t
@@ -77,6 +79,47 @@ class VOCgenerator():
                 "one_hot_label" : self.one_hot(class_id)
             })
         return file_name, ground_truths
+
+def reshape_to_yolo_size(img):
+    input_height, input_width, _ = img.shape
+    min_pixel = 320
+    max_pixel = 608
+
+    min_edge = np.minimum(input_width, input_height)
+    if min_edge < min_pixel:
+        input_width *= min_pixel / min_edge
+        input_height *= min_pixel / min_edge
+    max_edge = np.maximum(input_width, input_height)
+    if max_edge > max_pixel:
+        input_width *= max_pixel / max_edge
+        input_height *= max_pixel / max_edge
+
+    input_width = int(input_width / 32 + round(input_width % 32 / 32)) * 32
+    input_height = int(input_height / 32 + round(input_height % 32 / 32)) * 32
+    img = cv2.resize(img, (input_width, input_height))
+
+    return img
+
+def random_hsv_image(bgr_image, delta_hue, delta_sat_scale, delta_val_scale):
+    hsv_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV).astype(np.float32)
+
+    # hue
+    hsv_image[:, :, 0] += int((np.random.rand() * delta_hue * 2 - delta_hue) * 255)
+
+    # sat
+    sat_scale = 1 + np.random.rand() * delta_sat_scale * 2 - delta_sat_scale
+    hsv_image[:, :, 1] *= sat_scale
+
+    # val
+    val_scale = 1 + np.random.rand() * delta_val_scale * 2 - delta_val_scale
+    hsv_image[:, :, 2] *= val_scale
+
+    hsv_image[hsv_image < 0] = 0
+    hsv_image[hsv_image > 255] = 255
+    hsv_image = hsv_image.astype(np.uint8)
+    bgr_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGR)
+    return bgr_image
+
 
 
 # x, y, w, hの4パラメータを保持するだけのクラス
