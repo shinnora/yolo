@@ -15,7 +15,6 @@ from renom.cuda import cuda
 from renom.optimizer import Sgd, Adam
 from renom.core import DEBUG_NODE_STAT, DEBUG_GRAPH_INIT, DEBUG_NODE_GRAPH
 
-from yolo_detector import *
 
 class Darknet19(rm.Model):
 
