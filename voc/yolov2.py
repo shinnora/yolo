@@ -17,80 +17,76 @@ from renom.core import DEBUG_NODE_STAT, DEBUG_GRAPH_INIT, DEBUG_NODE_GRAPH
 
 from yolo_detector import *
 
+class DarknetConv2d(object):
+
+    def __init__(self, channel, filter, stride, padding):
+        self.channel = channel
+        self.conv = rm.Conv2d(channel=channel, filter=filter, padding=padding, stride=stride)
+        self.bn = rm.BatchNormalize(mode="feature")
+        self.bn.inference = True
+        self.gamma = rm.Variable(np.ones((1, channel, 1, 1)))
+        self.beta = rm.Variable(np.zeros((1, channel, 1, 1)))
+
+    def __call__(self, x):
+        return self.gamma * self.bn(self.conv(x)) + self.beta
+
+
+
+
 
 class Pretrained(rm.Model):
 
     def __init__(self, classes):
         super(Pretrained, self).__init__()
-        self.classes = classes
-
             ##### common layers for both pretrained layers and yolov2 #####
-        self.conv1  = rm.Conv2d(channel=32, filter=3, stride=1, padding=1)
-        self.bn1 = rm.BatchNormalize(mode='feature')
+        self.conv1  = DarknetConv2d(channel=32, filter=3, stride=1, padding=1)
         self.pool1 = rm.MaxPool2d(filter=2, stride=2, padding=0)
-        self.conv2  = rm.Conv2d(channel=64, filter=3, stride=1, padding=1)
-        self.bn2 = rm.BatchNormalize(mode='feature')
+        self.conv2  = DarknetConv2d(channel=64, filter=3, stride=1, padding=1)
         self.pool2 = rm.MaxPool2d(filter=2, stride=2, padding=0)
-        self.conv3  = rm.Conv2d(channel=128, filter=3, stride=1, padding=1)
-        self.bn3 = rm.BatchNormalize(mode='feature')
-        self.conv4  = rm.Conv2d(channel=64, filter=1, stride=1, padding=0)
-        self.bn4 = rm.BatchNormalize(mode='feature')
-        self.conv5  = rm.Conv2d(channel=128, filter=3, stride=1, padding=1)
-        self.bn5 = rm.BatchNormalize(mode='feature')
+        self.conv3  = DarknetConv2d(channel=128, filter=3, stride=1, padding=1)
+        self.conv4  = DarknetConv2d(channel=64, filter=1, stride=1, padding=0)
+        self.conv5  = DarknetConv2d(channel=128, filter=3, stride=1, padding=1)
         self.pool3 = rm.MaxPool2d(filter=2, stride=2, padding=0)
-        self.conv6  = rm.Conv2d(channel=256, filter=3, stride=1, padding=1)
-        self.bn6 = rm.BatchNormalize(mode='feature')
-        self.conv7  = rm.Conv2d(channel=128, filter=1, stride=1, padding=0)
-        self.bn7 = rm.BatchNormalize(mode='feature')
-        self.conv8  = rm.Conv2d(channel=256, filter=3, stride=1, padding=1)
-        self.bn8 = rm.BatchNormalize(mode='feature')
+        self.conv6  = DarknetConv2d(channel=256, filter=3, stride=1, padding=1)
+        self.conv7  = DarknetConv2d(channel=128, filter=1, stride=1, padding=0)
+        self.conv8  = DarknetConv2d(channel=256, filter=3, stride=1, padding=1)
         self.pool4 = rm.MaxPool2d(filter=2, stride=2, padding=0)
-        self.conv9  = rm.Conv2d(channel=512, filter=3, stride=1, padding=1)
-        self.bn9 = rm.BatchNormalize(mode='feature')
-        self.conv10  = rm.Conv2d(channel=256, filter=1, stride=1, padding=0)
-        self.bn10 = rm.BatchNormalize(mode='feature')
-        self.conv11  = rm.Conv2d(channel=512, filter=3, stride=1, padding=1)
-        self.bn11 = rm.BatchNormalize(mode='feature')
-        self.conv12  = rm.Conv2d(channel=256, filter=1, stride=1, padding=0)
-        self.bn12 = rm.BatchNormalize(mode='feature')
-        self.conv13  = rm.Conv2d(channel=512, filter=3, stride=1, padding=1)
-        self.bn13 = rm.BatchNormalize(mode='feature')
+        self.conv9  = DarknetConv2d(channel=512, filter=3, stride=1, padding=1)
+        self.conv10  = DarknetConv2d(channel=256, filter=1, stride=1, padding=0)
+        self.conv11  = DarknetConv2d(channel=512, filter=3, stride=1, padding=1)
+        self.conv12  = DarknetConv2d(channel=256, filter=1, stride=1, padding=0)
+        self.conv13  = DarknetConv2d(channel=512, filter=3, stride=1, padding=1)
         self.pool5 = rm.MaxPool2d(filter=2, stride=2, padding=0)
-        self.conv14  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
-        self.bn14 = rm.BatchNormalize(mode='feature')
-        self.conv15  = rm.Conv2d(channel=512, filter=1, stride=1, padding=0)
-        self.bn15 = rm.BatchNormalize(mode='feature')
-        self.conv16  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
-        self.bn16 = rm.BatchNormalize(mode='feature')
-        self.conv17  = rm.Conv2d(channel=512, filter=1, stride=1, padding=0)
-        self.bn17 = rm.BatchNormalize(mode='feature')
-        self.conv18  = rm.Conv2d(channel=1024, filter=3, stride=1, padding=1)
-        self.bn18 = rm.BatchNormalize(mode='feature')
+        self.conv14  = DarknetConv2d(channel=1024, filter=3, stride=1, padding=1)
+        self.conv15  = DarknetConv2d(channel=512, filter=1, stride=1, padding=0)
+        self.conv16  = DarknetConv2d(channel=1024, filter=3, stride=1, padding=1)
+        self.conv17  = DarknetConv2d(channel=512, filter=1, stride=1, padding=0)
+        self.conv18  = DarknetConv2d(channel=1024, filter=3, stride=1, padding=1)
 
-        ###### pretraining layer(not used)
+        ###### pretraining layer
         self.conv23 = rm.Conv2d(channel=classes, filter=1, stride=1, padding=0)
 
     def forward(self, x):
-        h = self.pool1(rm.leaky_relu(self.bn1(self.conv1(x)), slope=0.1))
-        h = self.pool2(rm.leaky_relu(self.bn2(self.conv2(h)), slope=0.1))
-        h = rm.leaky_relu(self.bn3(self.conv3(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn4(self.conv4(h)), slope=0.1)
-        h = self.pool3(rm.leaky_relu(self.bn5(self.conv5(h)), slope=0.1))
-        h = rm.leaky_relu(self.bn6(self.conv6(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn7(self.conv7(h)), slope=0.1)
-        h = self.pool4(rm.leaky_relu(self.bn8(self.conv8(h)), slope=0.1))
-        h = rm.leaky_relu(self.bn9(self.conv9(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn10(self.conv10(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn11(self.conv11(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn12(self.conv12(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn13(self.conv13(h)), slope=0.1)
-        high_resolution_feature = reorg(h) # 高解像度特徴量をreorgでサイズ落として保存しておく
+        h = self.pool1(rm.leaky_relu(self.conv1(x), slope=0.1))
+        h = self.pool2(rm.leaky_relu(self.conv2(h), slope=0.1))
+        h = rm.leaky_relu(self.conv3(h), slope=0.1)
+        h = rm.leaky_relu(self.conv4(h), slope=0.1)
+        h = self.pool3(rm.leaky_relu(self.conv5(h), slope=0.1))
+        h = rm.leaky_relu(self.conv6(h), slope=0.1)
+        h = rm.leaky_relu(self.conv7(h), slope=0.1)
+        h = self.pool4(rm.leaky_relu(self.conv8(h), slope=0.1))
+        h = rm.leaky_relu(self.conv9(h), slope=0.1)
+        h = rm.leaky_relu(self.conv10(h), slope=0.1)
+        h = rm.leaky_relu(self.conv11(h), slope=0.1)
+        h = rm.leaky_relu(self.conv12(h), slope=0.1)
+        h = rm.leaky_relu(self.conv13(h), slope=0.1)
+        high_resolution_feature = reorg(h)
         h = self.pool5(h)
-        h = rm.leaky_relu(self.bn14(self.conv14(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn15(self.conv15(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn16(self.conv16(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn17(self.conv17(h)), slope=0.1)
-        h = rm.leaky_relu(self.bn18(self.conv18(h)), slope=0.1)
+        h = rm.leaky_relu(self.conv14(h), slope=0.1)
+        h = rm.leaky_relu(self.conv15(h), slope=0.1)
+        h = rm.leaky_relu(self.conv16(h), slope=0.1)
+        h = rm.leaky_relu(self.conv17(h), slope=0.1)
+        h = rm.leaky_relu(self.conv18(h), slope=0.1)
 
         return h, high_resolution_feature
 

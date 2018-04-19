@@ -31,7 +31,6 @@ class yolo_detector(Node):
         # prob = prob_exp / np.sum(prob_exp, axis=1, keepdims=True)
         prob = rm.reshape(prob, (batch_size, classes, bbox, grid_h, grid_w))
         deltas = np.zeros(output_reshape.shape, dtype=np.float32)
-        print(np.isnan(conf).any())
         #x.to_cpu()
         #y.to_cpu()
         #conf.to_cpu()
@@ -81,11 +80,8 @@ class yolo_detector(Node):
             best_ious.append(np.max(ious, axis=0))
         best_ious = np.array(best_ious)
         #print(np.isnan(best_ious).any())
-        print(np.isnan(tconf).any())
         tconf[best_ious > thresh] = conf[best_ious > thresh].as_ndarray()
         conf_learning_scale[best_ious > thresh] = 0
-        #print(np.isnan(conf.as_ndarray()).any())
-        print(np.isnan(tconf).any())
 
         abs_anchors = anchors / np.array([grid_w, grid_h])
         for batch in range(batch_size):
@@ -120,7 +116,7 @@ class yolo_detector(Node):
                 predicted_iou = box_iou(full_truth_box, predicted_box)
                 tconf[batch, truth_n, :, truth_h, truth_w] = predicted_iou
                 conf_learning_scale[batch, truth_n, :, truth_h, truth_w] = 5.0
-        print(jj)
+
 
         #box_learning_scale *= 100
         #loss

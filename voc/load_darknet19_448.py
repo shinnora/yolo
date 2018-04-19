@@ -1,9 +1,9 @@
 import numpy as np
 import renom as rm
-from darknet19 import *
+from yolov2 import *
 
 classes = 1000
-model = Darknet19(classes=classes)
+model = Pretrained(classes=classes)
 weights_path = "./weights/darknet19_448.weights"
 
 with open(weights_path, "rb") as f:
@@ -18,14 +18,25 @@ with open(weights_path, "rb") as f:
         out_ch = l[1]
         size = l[2]
 
-        txt= "model.conv%d.params['b'] = rm.Variable(dat[%d:%d])" % (i+1, offset, offset+out_ch)
+
+        txt= "model.conv%d.beta = rm.Variable(dat[%d:%d].reshape(1, %d, 1, 1))" % (i+1, offset, offset+out_ch, out_ch)
         offset += out_ch
         exec(txt)
 
         #TODO batch_normalizeのパラメタ
-        offset += 3 * out_ch
+        txt= "model.conv%d.gamma = rm.Variable(dat[%d:%d])" % (i+1, offset, offset+out_ch)
+        offset += out_ch
+        exec(txt)
 
-        txt= "model.conv%d.params['w'] = rm.Variable(dat[%d:%d].reshape(%d,%d,%d,%d))" % (i+1, offset, offset+(out_ch*in_ch*size*size), out_ch, in_ch, size, size)
+        txt= "model.conv%d.bn._mov_mean = rm.Variable(dat[%d:%d])" % (i+1, offset, offset+out_ch)
+        offset += out_ch
+        exec(txt)
+
+        txt= "model.conv%d.bn._mov_std = rm.Variable(np.sqrt(dat[%d:%d]))" % (i+1, offset, offset+out_ch)
+        offset += out_ch
+        exec(txt)
+
+        txt= "model.conv%d.conv.params['w'] = rm.Variable(dat[%d:%d].reshape(%d,%d,%d,%d))" % (i+1, offset, offset+(out_ch*in_ch*size*size), out_ch, in_ch, size, size)
         offset += out_ch*in_ch*size*size
         exec(txt)
 
