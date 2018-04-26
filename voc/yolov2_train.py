@@ -36,7 +36,7 @@ bbox = 5
 
 # load image generator
 print("loading image generator...")
-image_generator = VOCgenerator().generate_samples(batch_size=batch_size)
+
 
 # load model
 print("loading initial model...")
@@ -105,6 +105,7 @@ opt = Sgd(lr=learning_rate, momentum=momentum)
 # start to train
 print("start training")
 for epoch in range(epochs):
+    image_generator = VOCgenerator().generate_samples(batch_size=batch_size)
     batch = 0
     if str(epoch) in learning_schedules:
         opt._lr = learning_schedules[str(epoch)]
