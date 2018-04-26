@@ -19,12 +19,13 @@ backup_path = "./weights"
 backup_file = "%s/backup.h5" % (backup_path)
 pretrained_weight_file = "%s/darknet19_448.h5" % (backup_path)
 initial_weight_file = "%s/backup.h5" % (backup_path)
-batch_size = 4
+batch_size = 8
 epochs = 160
-learning_rate = 1e-3
+learning_rate = 1e-4
 learning_schedules = {
-    "0" : 1e-3,
-    "60": 1e-4,
+    "0" : 1e-4,
+    "10" : 1e-3,
+    "60" : 1e-4,
     "90": 1e-5
 }
 

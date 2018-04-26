@@ -142,9 +142,13 @@ class YOLOv2(rm.Model):
 
 
 def yolo_train(yolo_model, pretrained_model, input_x, t, opt, weight_decay):
+    pretrained_model.set_models(inference=True)
+    yolo_model.set_models(inference=False)
     with yolo_model.train():
         pretrained_x = pretrained_model(input_x)
-        output = yolo_model(*pretrained_x)
+        x = pretrained_x[0].as_ndarray()
+        feature = pretrained_x[1].as_ndarray()
+        output = yolo_model(x, feature)
 
         wd = 0
         for i in range(19, 23):
@@ -153,9 +157,7 @@ def yolo_train(yolo_model, pretrained_model, input_x, t, opt, weight_decay):
                 w = m.params.get("w", None)
                 if w is not None:
                     wd += rm.sum(w**2)
-
         loss = yolo_detector(output, t, bbox=yolo_model.bbox, classes=yolo_model.classes, init_anchors=yolo_model.anchors) + weight_decay * wd
-
     grad = loss.grad()
     grad.update(opt)
     return loss
