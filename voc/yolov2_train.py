@@ -102,11 +102,12 @@ with open(weights_path, "rb") as f:
 yolo_model = YOLOv2(classes=classes, bbox=bbox)
 
 opt = Sgd(lr=learning_rate, momentum=momentum)
+voc = VOCgenerator()
 
 # start to train
 print("start training")
 for epoch in range(epochs):
-    image_generator = VOCgenerator().generate_samples(batch_size=batch_size)
+    image_generator = voc.generate_samples(batch_size=batch_size)
     batch = 0
     if str(epoch) in learning_schedules:
         opt._lr = learning_schedules[str(epoch)]
