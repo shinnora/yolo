@@ -12,7 +12,7 @@ from renom.utility.distributor import NdarrayDistributor
 from yolov2 import *
 from utils import *
 
-# set_cuda_active(True)
+set_cuda_active(True)
 
 # hyper parameters
 backup_path = "./weights"
