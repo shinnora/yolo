@@ -12,7 +12,7 @@ from renom.utility.distributor import NdarrayDistributor
 from yolov2 import *
 from utils import *
 
-set_cuda_active(True)
+# set_cuda_active(True)
 
 # hyper parameters
 backup_path = "./weights"
@@ -98,6 +98,7 @@ print("start testing")
 
 image_generator = voc.generate_samples(batch_size=1, train=False)
 img, t = next(image_generator)
+print(img[0].shape)
 input_width = img[0].shape[0]
 input_height = img[0].shape[1]
 x, y, w, h, conf, prob = yolo_predict(yolo_model, pretrained_model, img)

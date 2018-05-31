@@ -43,7 +43,9 @@ class VOCgenerator():
                     img = cv2.resize(cv2.imread(img_path), (size, size))
                     img = (random_hsv_image(img, 0, 0.5, 0.5) / 255.0).transpose(2,0,1)
                 else:
-                    img = reshape_to_yolo_size(cv2.imread(img_path))
+                    #img = reshape_to_yolo_size(cv2.imread(img_path))
+                    img = cv2.resize(cv2.imread(img_path), (size, size))
+                    img = (random_hsv_image(img, 0, 0.5, 0.5) / 255.0).transpose(2,0,1)
                 x.append(img)
                 t.append(ground_truths)
             x = np.asarray(x, dtype=np.float32)
@@ -88,7 +90,7 @@ class VOCgenerator():
 def reshape_to_yolo_size(img):
     input_height, input_width, _ = img.shape
     min_pixel = 320
-    max_pixel = 608
+    max_pixel = 448
 
     min_edge = np.minimum(input_width, input_height)
     if min_edge < min_pixel:
