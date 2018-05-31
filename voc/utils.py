@@ -43,9 +43,7 @@ class VOCgenerator():
                     img = cv2.resize(cv2.imread(img_path), (size, size))
                     img = (random_hsv_image(img, 0, 0.5, 0.5) / 255.0).transpose(2,0,1)
                 else:
-                    #img = reshape_to_yolo_size(cv2.imread(img_path))
-                    img = cv2.resize(cv2.imread(img_path), (size, size))
-                    img = (random_hsv_image(img, 0, 0.5, 0.5) / 255.0).transpose(2,0,1)
+                    img = reshape_to_yolo_size(cv2.imread(img_path))
                 x.append(img)
                 t.append(ground_truths)
             x = np.asarray(x, dtype=np.float32)
