@@ -164,7 +164,9 @@ def yolo_train(yolo_model, pretrained_model, input_x, t, opt, weight_decay):
 
 def yolo_predict(yolo_model, pretrained_model, input_x):
     pretrained_x = pretrained_model(input_x)
-    output = yolo_model(*pretrained_x)
+    x = pretrained_x[0].as_ndarray()
+    feature = pretrained_x[1].as_ndarray()
+    output = yolo_model(x, feature)
     batch_size, _, grid_h, grid_w = output.shape
     output_reshape = np.reshape(output, (batch_size, yolo_model.bbox, yolo_model.classes+5, grid_h, grid_w))
     x, y, w, h, conf, prob = output_reshape[:,:,0:1,:,:], output_reshape[:,:,1:2,:,:],output_reshape[:,:,2:3,:,:], output_reshape[:,:,3:4,:,:], output_reshape[:,:,4:5,:,:], output_reshape[:,:,5:,:,:]
